@@ -1,0 +1,4 @@
+@host = http://localhost
+
+POST {{host}}/api/books
+
