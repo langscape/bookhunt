@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Mapster;
+using MapsterMapper;
 
 namespace Application.Common;
 
@@ -16,6 +17,14 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(assembly);
         });
+
+        // Add Mapster DI
+        var config = TypeAdapterConfig.GlobalSettings;
+        config.Scan(assembly);
+
+        services.AddSingleton(config);
+
+        services.AddSingleton<IMapper, Mapper>();
 
         return services;
     }

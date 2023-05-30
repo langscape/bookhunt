@@ -1,4 +1,10 @@
-@host = http://localhost
+@host = https://localhost:7291
 
 POST {{host}}/api/books
+Content-Type: application/json
 
+{
+  "title": "The Lord of the Rings",
+  "author": "J. R. R. Tolkien",
+  "isbn": "978-0-395-19395-7"
+}
