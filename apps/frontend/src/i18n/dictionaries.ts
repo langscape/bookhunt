@@ -45,6 +45,8 @@ const en: Dict = {
   readers: "Readers",
   latest_activity: "Latest Activity",
   no_activity: "No activity yet. Be the first to report!",
+  activity_desc: "Recent book finds and releases from the community.",
+  loading: "Loading…",
   hero_subtitle: "Slow down. Share a story.",
   latest_findings: "Latest findings from the community",
   help_cta: "I want to help!",
