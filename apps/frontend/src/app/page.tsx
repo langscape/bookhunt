@@ -4,14 +4,14 @@ import { createDirectus, rest, readItems, staticToken } from "@directus/sdk";
 
 interface Book {
   id: string;
-  title: string;
-  author?: string;
-  description?: string;
+  Title: string;
+  Author?: string;
+  Description?: string;
   date_created: string;
 }
 
 interface Schema {
-  books: Book[];
+  Books: Book[];
 }
 
 // get directus instance from env
@@ -22,7 +22,7 @@ const directus = createDirectus<Schema>(directusUrl)
   .with(staticToken(directusToken))
   .with(rest());
 
-const collection = "books";
+const collection = "Books";
 
 export default async function Home() {
   const allBooks = await directus.request(readItems(collection));
@@ -98,13 +98,13 @@ export default async function Home() {
                 className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-5"
               >
                 <h3 className="text-lg font-semibold text-emerald-200">
-                  {book.title}
+                  {book.Title}
                 </h3>
-                {book.author && (
-                  <p className="text-sm text-slate-300">by {book.author}</p>
+                {book.Author && (
+                  <p className="text-sm text-slate-300">by {book.Author}</p>
                 )}
-                {book.description && (
-                  <p className="text-sm text-slate-400">{book.description}</p>
+                {book.Description && (
+                  <p className="text-sm text-slate-400">{book.Description}</p>
                 )}
                 <time className="text-xs text-slate-500">
                   Added on{" "}
@@ -112,6 +112,14 @@ export default async function Home() {
                 </time>
               </article>
             ))}
+          </div>
+          <div className="mt-6 flex justify-center">
+            <a
+              className="inline-flex items-center justify-center rounded-full bg-violet-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-violet-500"
+              href="/books/new"
+            >
+              Create New Book
+            </a>
           </div>
         </section>
       </main>
