@@ -2,12 +2,14 @@
 
 import React from "react";
 import Button from "@/components/ui/Button";
+import { useI18n } from "@/i18n/client";
 
 type Props = {
   onDetected: (value: string) => void;
 };
 
 export default function CameraScanner({ onDetected }: Props) {
+  const { t } = useI18n();
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [active, setActive] = React.useState(false);
   const [supported, setSupported] = React.useState<boolean | null>(null);
@@ -69,7 +71,7 @@ export default function CameraScanner({ onDetected }: Props) {
 
   if (supported === false) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
         Scanning not supported in this browser. Enter ISBN manually.
       </div>
     );
@@ -79,14 +81,13 @@ export default function CameraScanner({ onDetected }: Props) {
     <div className="flex w-full flex-col items-center gap-3">
       {!active ? (
         <Button onClick={() => setActive(true)} variant="outline">
-          Scan ISBN with Camera
+          {t("scan_isbn")}
         </Button>
       ) : (
-        <div className="w-full overflow-hidden rounded-xl border border-slate-800 bg-black">
+        <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-black">
           <video ref={videoRef} className="aspect-video w-full object-cover" />
         </div>
       )}
     </div>
   );
 }
-

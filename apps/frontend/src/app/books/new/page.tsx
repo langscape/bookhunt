@@ -6,9 +6,11 @@ import Input, { Label, TextArea } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import CameraScanner from "@/components/CameraScanner";
 import { lookupIsbn } from "@/lib/googleBooks";
+import { useI18n } from "@/i18n/client";
 
 export default function NewBookPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [isbn, setIsbn] = useState("");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -58,14 +60,14 @@ export default function NewBookPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-8 sm:py-12">
-        <button onClick={() => router.back()} className="text-sm text-violet-300 hover:text-violet-200">
-          ← Back
+        <button onClick={() => router.back()} className="text-sm text-violet-700 hover:text-violet-600">
+          ← {t("back")}
         </button>
-        <h1 className="text-3xl font-semibold">Add a New Book</h1>
+        <h1 className="text-3xl font-semibold">{t("add_new_book")}</h1>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex flex-col items-stretch gap-4">
             <CameraScanner
               onDetected={(code) => {
@@ -76,39 +78,39 @@ export default function NewBookPage() {
 
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <Label>ISBN</Label>
+                <Label>{t("isbn")}</Label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="e.g. 9780143127741"
                     value={isbn}
                     onChange={(e) => setIsbn(e.target.value)}
                   />
-                  <Button type="button" variant="outline" onClick={() => handleLookup()}>Lookup</Button>
+                  <Button type="button" variant="outline" onClick={() => handleLookup()}>{t("lookup")}</Button>
                 </div>
               </div>
 
               <div>
-                <Label>Title</Label>
-                <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <Label>{t("title")}</Label>
+                <Input placeholder={t("title")} value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
 
               <div>
-                <Label>Author</Label>
-                <Input placeholder="Author" value={author} onChange={(e) => setAuthor(e.target.value)} />
+                <Label>{t("author")}</Label>
+                <Input placeholder={t("author")} value={author} onChange={(e) => setAuthor(e.target.value)} />
               </div>
 
               <div>
-                <Label>Description</Label>
-                <TextArea placeholder="Short description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <Label>{t("description")}</Label>
+                <TextArea placeholder={t("description")} value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
             </div>
 
             {error && (
-              <p className="rounded-xl border border-red-900 bg-red-950/50 px-4 py-2 text-sm text-red-300">{error}</p>
+              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
             )}
 
             <Button onClick={handleSubmit} disabled={loading} full>
-              {loading ? "Saving…" : "Save Book"}
+              {loading ? t("saving") : t("save_book")}
             </Button>
           </div>
         </div>
@@ -116,4 +118,3 @@ export default function NewBookPage() {
     </div>
   );
 }
-

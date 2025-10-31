@@ -18,7 +18,7 @@ export default function Input({ className, ...rest }: Props) {
   return (
     <input
       className={cx(
-        "w-full rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-violet-500 focus:outline-none",
+        "w-full rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-slate-900 placeholder-slate-500 focus:border-violet-600 focus:outline-none",
         className,
       )}
       {...rest}
@@ -32,7 +32,7 @@ export function TextArea(
   return (
     <textarea
       className={cx(
-        "w-full rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-violet-500 focus:outline-none",
+        "w-full rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-slate-900 placeholder-slate-500 focus:border-violet-600 focus:outline-none",
         props.className,
       )}
       rows={props.rows ?? 4}
