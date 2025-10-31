@@ -45,6 +45,15 @@ const en: Dict = {
   readers: "Readers",
   latest_activity: "Latest Activity",
   no_activity: "No activity yet. Be the first to report!",
+  hero_subtitle: "Slow down. Share a story.",
+  latest_findings: "Latest findings from the community",
+  help_cta: "I want to help!",
+  found_by_label: "Found by",
+  location_label: "Location",
+  banner_placeholder: "Banner image placeholder",
+  welcome_title: "Welcome to Bookhunt",
+  welcome_intro:
+    "Leave a book for someone to discover, or find one waiting for you. Each scan reveals its journey — connecting readers through curiosity, kindness, and a love for mindful reading. Let your next story find you.",
 };
 
 const es: Dict = {
@@ -139,4 +148,3 @@ export function t(locale: Locale, key: string) {
 }
 
 export type Dictionary = typeof en;
-

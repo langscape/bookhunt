@@ -10,6 +10,12 @@ interface Book {
   Author?: string;
   Description?: string;
   date_created: string;
+  // Optional fields if Directus provides them
+  city?: string;
+  country?: string;
+  location?: string;
+  found_by?: string;
+  foundBy?: string;
 }
 
 interface Schema {
@@ -44,27 +50,29 @@ export default async function Home() {
             />
           </div>
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-            {t(locale, "hero_title")}
+            {t(locale, "welcome_title")}
           </h1>
-          <p className="mx-auto max-w-2xl text-pretty text-lg text-slate-600">
-            {t(locale, "hero_desc")}
+
+          {/* Banner image placeholder */}
+          <div
+            aria-label={t(locale, "banner_placeholder")}
+            className="mx-auto h-40 w-full max-w-4xl rounded-2xl bg-slate-100 text-slate-500 sm:h-52 lg:h-64 flex items-center justify-center"
+          >
+            <img src="/banner.png" alt="" className="h-full" />
+          </div>
+
+          <h2 className="text-xl font-medium text-slate-700">
+            {t(locale, "hero_subtitle")}
+          </h2>
+          <p className="mx-auto max-w-3xl text-pretty text-lg text-slate-600">
+            {t(locale, "welcome_intro")}
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
-              className="inline-flex items-center justify-center rounded-full border border-emerald-600 px-6 py-3 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
-              href="https://docs.directus.io"
-              target="_blank"
-              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-violet-700 px-6 py-3 text-sm font-medium text-white transition hover:bg-violet-600"
+              href="/books/new"
             >
-              {t(locale, "explore_directus")}
-            </a>
-            <a
-              className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-emerald-500"
-              href="https://nextjs.org/docs"
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t(locale, "learn_next")}
+              {t(locale, "help_cta")}
             </a>
           </div>
         </section>
@@ -72,20 +80,27 @@ export default async function Home() {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">{t(locale, "latest_books")}</h2>
+              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                {t(locale, "latest_findings")}
+              </h2>
               <p className="text-sm text-slate-600">
                 This list is populated from the Directus collection{" "}
                 <code>{collection}</code>.
               </p>
             </div>
             <span className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 sm:mt-0">
-              {allBooks.length} {allBooks.length === 1 ? t(locale, "entries_label_singular") : t(locale, "entries_label_plural")}
+              {allBooks.length}{" "}
+              {allBooks.length === 1
+                ? t(locale, "entries_label_singular")
+                : t(locale, "entries_label_plural")}
             </span>
           </header>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {allBooks.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">{t(locale, "no_entries")}</p>
+              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+                {t(locale, "no_entries")}
+              </p>
             )}
             {allBooks.map((book) => (
               <article
@@ -101,6 +116,23 @@ export default async function Home() {
                 {book.Description && (
                   <p className="text-sm text-slate-600">{book.Description}</p>
                 )}
+                {(book.found_by || book.foundBy) && (
+                  <p className="text-sm text-slate-700">
+                    <span className="font-medium">
+                      {t(locale, "found_by_label")}:
+                    </span>{" "}
+                    {book.found_by || book.foundBy}
+                  </p>
+                )}
+                {(book.location || book.city || book.country) && (
+                  <p className="text-sm text-slate-700">
+                    <span className="font-medium">
+                      {t(locale, "location_label")}:
+                    </span>{" "}
+                    {book.location ||
+                      [book.city, book.country].filter(Boolean).join(", ")}
+                  </p>
+                )}
                 <time className="text-xs text-slate-500">
                   Added on{" "}
                   {new Date(book.date_created ?? Date.now()).toLocaleString()}
@@ -115,11 +147,6 @@ export default async function Home() {
                 </div>
               </article>
             ))}
-          </div>
-          <div className="mt-6 flex justify-center">
-            <a className="inline-flex items-center justify-center rounded-full bg-violet-700 px-6 py-3 text-sm font-medium text-white transition hover:bg-violet-600" href="/books/new">
-              {t(locale, "create_book")}
-            </a>
           </div>
         </section>
       </main>
