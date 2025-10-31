@@ -35,6 +35,7 @@ interface BookTransaction {
   latitude?: number;
   longitude?: number;
   book?: BookRef | string;
+  pictures?: Array<{ id: string; filename_download?: string; title?: string }> | string[];
 }
 
 interface Schema {
@@ -70,6 +71,8 @@ export default async function Home() {
         "longitude",
         "book.id",
         "book.Title",
+        "pictures.id",
+        "pictures.filename_download",
       ],
     } as any)
   )) as BookTransaction[];

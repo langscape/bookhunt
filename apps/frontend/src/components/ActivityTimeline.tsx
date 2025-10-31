@@ -16,6 +16,7 @@ export type BookTransaction = {
   latitude?: number;
   longitude?: number;
   book?: BookRef | string;
+  pictures?: Array<{ id: string; filename_download?: string; title?: string }> | string[];
 };
 
 function MapThumb({ tx }: { tx: BookTransaction }) {
@@ -49,9 +50,13 @@ function MapThumb({ tx }: { tx: BookTransaction }) {
 export default function ActivityTimeline({
   initial,
   locale,
+  bookId,
+  hideBookLink,
 }: {
   initial: BookTransaction[];
   locale: Locale;
+  bookId?: string;
+  hideBookLink?: boolean;
 }) {
   const [items, setItems] = useState<BookTransaction[]>(initial);
   const [offset, setOffset] = useState<number>(initial.length);
@@ -64,9 +69,9 @@ export default function ActivityTimeline({
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/transactions?offset=${offset}&limit=${limit}`
-      );
+      const params = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+      if (bookId) params.set("bookId", bookId);
+      const res = await fetch(`/api/transactions?${params.toString()}`);
       const data = (await res.json()) as { items: BookTransaction[] };
       setItems((prev) => [...prev, ...data.items]);
       setOffset((o) => o + data.items.length);
@@ -77,7 +82,7 @@ export default function ActivityTimeline({
     } finally {
       setLoading(false);
     }
-  }, [offset, limit, loading, hasMore]);
+  }, [offset, limit, loading, hasMore, bookId]);
 
   useEffect(() => {
     if (!sentinelRef.current) return;
@@ -121,6 +126,7 @@ export default function ActivityTimeline({
               typeof tx.longitude === "number") ||
             Boolean(tx.city || tx.country);
           const isEven = idx % 2 === 0;
+          const pictures = Array.isArray(tx.pictures) ? tx.pictures : [];
 
           return (
             <li key={tx.id} className="relative pl-10">
@@ -151,20 +157,38 @@ export default function ActivityTimeline({
                         {tx.comment}
                       </p>
                     )}
+                    {pictures.length > 0 && (
+                      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                        {pictures.map((p, i) => {
+                          const id = typeof (p as any) === "string" ? (p as string) : (p as any).id;
+                          if (!id) return null;
+                          const base = process.env.NEXT_PUBLIC_DIRECTUS_URL || "";
+                          const src = `${base}/assets/${id}`;
+                          return (
+                            <a key={id + i} href={src} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border bg-slate-100">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={src} alt="Attachment" className="h-24 w-full object-cover" loading="lazy" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                     {location && (
                       <p className="mt-1 text-xs text-slate-500">{location}</p>
                     )}
                     <time className="mt-1 block text-xs text-slate-500">
                       {new Date(tx.date_created ?? Date.now()).toLocaleString()}
                     </time>
-                    <div className="mt-3">
-                      <a
-                        href={book?.id ? `/books/${book.id}` : "#"}
-                        className="inline-flex items-center justify-center rounded-full bg-violet-700 px-4 py-2 text-xs font-medium text-white transition hover:bg-violet-600"
-                      >
-                        {t(locale, "open_book_page")}
-                      </a>
-                    </div>
+                    {!hideBookLink && (
+                      <div className="mt-3">
+                        <a
+                          href={book?.id ? `/books/${book.id}` : "#"}
+                          className="inline-flex items-center justify-center rounded-full bg-violet-700 px-4 py-2 text-xs font-medium text-white transition hover:bg-violet-600"
+                        >
+                          {t(locale, "open_book_page")}
+                        </a>
+                      </div>
+                    )}
                   </div>
                   {hasMap && (
                     <div className="mt-3 w-full sm:mt-0 sm:w-56">

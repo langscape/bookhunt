@@ -22,6 +22,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
+  const [files, setFiles] = React.useState<File[]>([]);
 
   async function getLocation() {
     setError(null);
@@ -42,19 +43,20 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
     setError(null);
     setSuccess(null);
     try {
+      const form = new FormData();
+      form.append("type", type);
+      if (reporter) form.append("reporter", reporter);
+      if (comment) form.append("comment", comment);
+      if (city) form.append("city", city);
+      if (country) form.append("country", country);
+      if (typeof coords.lat === "number") form.append("latitude", String(coords.lat));
+      if (typeof coords.lon === "number") form.append("longitude", String(coords.lon));
+      if (place) form.append("place", place);
+      files.forEach((f) => form.append("pictures", f));
+
       const res = await fetch(`/api/books/${bookId}/transactions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          reporter: reporter || undefined,
-          comment: comment || undefined,
-          city: city || undefined,
-          country: country || undefined,
-          latitude: coords.lat,
-          longitude: coords.lon,
-          place,
-        }),
+        body: form,
       });
       const json = await res.json();
       setLoading(false);
@@ -65,6 +67,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
       setSuccess(type === "FOUND" ? "Found recorded!" : "Release recorded!");
       setType(null);
       setComment("");
+      setFiles([]);
       onSubmitted?.();
     } catch (e) {
       setLoading(false);
@@ -100,6 +103,20 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
           <div>
             <Label>{t("comment_for_others")}</Label>
             <TextArea placeholder={t("comment_for_others")} value={comment} onChange={(e) => setComment(e.target.value)} />
+          </div>
+
+          <div>
+            <Label>{t("upload_photos") ?? "Upload photos (optional)"}</Label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              className="mt-1 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-violet-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-violet-700 hover:file:bg-violet-100"
+            />
+            {files.length > 0 && (
+              <p className="mt-1 text-xs text-slate-500">{files.length} file(s) selected</p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

@@ -1,6 +1,7 @@
 import { getBook, getTransactionsForBook } from "@/lib/directus";
 import { computeStats } from "@/lib/stats";
 import BookActions from "@/components/BookActions";
+import ActivityTimeline from "@/components/ActivityTimeline";
 import { getServerLocale } from "@/lib/server/locale";
 import { t } from "@/i18n/dictionaries";
 
@@ -35,10 +36,15 @@ export default async function BookPage({ params }: Props) {
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-lg font-semibold">{t(locale, "latest_activity")}</h2>
-          {txs.length === 0 && (
+          {txs.length === 0 ? (
             <p className="mt-2 text-sm text-slate-600">{t(locale, "no_activity")}</p>
+          ) : (
+            <div className="mt-3">
+              {/* Timeline for this specific book */}
+              <ActivityTimeline initial={txs.slice().reverse()} locale={locale} bookId={params.id} hideBookLink />
+            </div>
           )}
-          <ul className="mt-3 space-y-3">
+          {false && (<ul className="mt-3 space-y-3">
             {txs
               .slice()
               .reverse()
@@ -55,7 +61,7 @@ export default async function BookPage({ params }: Props) {
                   {t.comment && <p className="mt-2 text-sm text-slate-700">“{t.comment}”</p>}
                 </li>
               ))}
-          </ul>
+          </ul>)}
         </section>
       </main>
     </div>

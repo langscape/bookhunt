@@ -24,31 +24,36 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const limit = Number(searchParams.get("limit") ?? "10");
   const offset = Number(searchParams.get("offset") ?? "0");
+  const bookId = searchParams.get("bookId");
 
-  const items = (await directus.request(
-    readItems("BookTransactions" as any, {
-      sort: ["-date_created"],
-      limit,
-      offset,
-      fields: [
-        "id",
-        "type",
-        "date_created",
-        "reporter",
-        "comment",
-        "city",
-        "country",
-        "latitude",
-        "longitude",
-        "book.id",
-        "book.Title",
-      ],
-    } as any)
-  )) as BookTransaction[];
+  const query: any = {
+    sort: ["-date_created"],
+    limit,
+    offset,
+    fields: [
+      "id",
+      "type",
+      "date_created",
+      "reporter",
+      "comment",
+      "city",
+      "country",
+      "latitude",
+      "longitude",
+      "book.id",
+      "book.Title",
+      "pictures.id",
+      "pictures.filename_download",
+    ],
+  };
+  if (bookId) {
+    query.filter = { book: { _eq: bookId } };
+  }
+
+  const items = (await directus.request(readItems("BookTransactions" as any, query))) as BookTransaction[];
 
   return new Response(JSON.stringify({ items }), {
     headers: { "content-type": "application/json" },
     status: 200,
   });
 }
-

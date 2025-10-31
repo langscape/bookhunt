@@ -43,6 +43,7 @@ export interface BookTransaction {
   latitude?: number | null;
   longitude?: number | null;
   date_created?: string;
+  pictures?: string[] | { id: string }[] | null;
 }
 
 export async function createTransaction(data: Partial<BookTransaction>) {
@@ -54,6 +55,20 @@ export async function getTransactionsForBook(bookId: string) {
     readItems("BookTransactions", {
       filter: { book: { _eq: bookId } },
       sort: ["date_created"],
+      fields: [
+        "id",
+        "book",
+        "type",
+        "reporter",
+        "comment",
+        "city",
+        "country",
+        "latitude",
+        "longitude",
+        "date_created",
+        "pictures.id",
+        "pictures.filename_download",
+      ] as any,
       limit: -1,
     }),
   );
