@@ -1,0 +1,20 @@
+# Node.js
+node_modules/
+*.log
+
+# Next.js
+.next/
+out/
+
+# Local env files
+.env
+*.env.local
+
+# Directus data
+apps/backend/postgres-data/
+apps/backend/directus/uploads/
+apps/backend/directus/extensions/
+
+# Keep placeholder files in version control
+!apps/backend/directus/uploads/.gitkeep
+!apps/backend/directus/extensions/.gitkeep

@@ -1,0 +1,10 @@
+{
+  "name": "bookhunt",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix apps/frontend run dev",
+    "build:frontend": "npm --prefix apps/frontend run build",
+    "lint": "npm --prefix apps/frontend run lint",
+    "start:frontend": "npm --prefix apps/frontend run start"
+  }
+}
