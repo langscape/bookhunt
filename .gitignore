@@ -14,7 +14,9 @@ out/
 apps/backend/postgres-data/
 apps/backend/directus/uploads/
 apps/backend/directus/extensions/
+apps/backend/data/
 
 # Keep placeholder files in version control
 !apps/backend/directus/uploads/.gitkeep
 !apps/backend/directus/extensions/.gitkeep
+
