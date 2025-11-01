@@ -18,7 +18,9 @@ export default async function BookQrPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-xl flex-col items-center gap-6 px-4 py-10">
-        <h1 className="text-center text-2xl font-semibold">{t(locale, "book_added")}</h1>
+        <h1 className="text-center text-2xl font-semibold">
+          {t(locale, "book_added")}
+        </h1>
         <div className="w-20">
           <Image src="/book.svg" alt="Book" width={80} height={80} />
         </div>
@@ -32,12 +34,21 @@ export default async function BookQrPage({ params }: Props) {
           <div className="mt-6 flex items-center justify-center">
             {/* External simple QR image service to avoid extra dependencies */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrUrl} alt="QR Code" className="rounded-xl border border-slate-200" />
+            <img
+              src={qrUrl}
+              alt="QR Code"
+              className="rounded-xl border border-slate-200"
+            />
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-3">
-            <Button onClick={() => (typeof window !== "undefined" ? window.print() : undefined)}>{t(locale, "print")}</Button>
-            <a href={target} className="text-sm text-violet-700 hover:text-violet-600">{t(locale, "open_book_page")}</a>
+            <Button>{t(locale, "print")}</Button>
+            <a
+              href={target}
+              className="text-sm text-violet-700 hover:text-violet-600"
+            >
+              {t(locale, "open_book_page")}
+            </a>
           </div>
         </div>
       </main>
