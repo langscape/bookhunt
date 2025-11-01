@@ -85,15 +85,6 @@ export default async function Home() {
     <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8">
         <section className="flex flex-col gap-6 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
-            <Image
-              src="/book.svg"
-              alt="Bookhunt logo"
-              width={48}
-              height={48}
-              className="text-emerald-600"
-            />
-          </div>
           <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             {t(locale, "welcome_title")}
           </h1>
