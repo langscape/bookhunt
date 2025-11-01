@@ -3,7 +3,9 @@ import Image from "next/image";
 import { createDirectus, rest, readItems, staticToken } from "@directus/sdk";
 import { getServerLocale } from "@/lib/server/locale";
 import { t } from "@/i18n/dictionaries";
-import ActivityTimeline, { type BookTransaction } from "@/components/ActivityTimeline";
+import ActivityTimeline, {
+  type BookTransaction,
+} from "@/components/ActivityTimeline";
 
 interface Book {
   id: string;
@@ -26,7 +28,7 @@ interface BookRef {
 
 interface BookTransaction {
   id: string;
-  type?: 'FOUND' | 'RELEASED' | string;
+  type?: "FOUND" | "RELEASED" | string;
   date_created?: string;
   city?: string;
   country?: string;
@@ -35,7 +37,7 @@ interface BookTransaction {
   latitude?: number;
   longitude?: number;
   book?: BookRef | string;
-  pictures?: Array<{ id: string; filename_download?: string; title?: string }> | string[];
+  pictures?: Array<{ id: string; title?: string }> | string[];
 }
 
 interface Schema {
@@ -56,25 +58,27 @@ const collection = "BookTransactions";
 export default async function Home() {
   const locale = getServerLocale();
   const transactions = (await directus.request(
-    readItems(collection as any, {
-      sort: ["-date_created"],
-      limit: 12,
-      fields: [
-        "id",
-        "type",
-        "date_created",
-        "city",
-        "country",
-        "reporter",
-        "comment",
-        "latitude",
-        "longitude",
-        "book.id",
-        "book.Title",
-        "pictures.id",
-        "pictures.filename_download",
-      ],
-    } as any)
+    readItems(
+      collection as any,
+      {
+        sort: ["-date_created"],
+        limit: 12,
+        fields: [
+          "id",
+          "type",
+          "date_created",
+          "city",
+          "country",
+          "reporter",
+          "comment",
+          "latitude",
+          "longitude",
+          "book.id",
+          "book.Title",
+          "pictures.id",
+        ],
+      } as any
+    )
   )) as BookTransaction[];
 
   return (
@@ -121,8 +125,12 @@ export default async function Home() {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">{t(locale, "latest_activity")}</h2>
-              <p className="text-sm text-slate-600">{t(locale, "activity_desc")}</p>
+              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                {t(locale, "latest_activity")}
+              </h2>
+              <p className="text-sm text-slate-600">
+                {t(locale, "activity_desc")}
+              </p>
             </div>
             <span className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 sm:mt-0">
               {transactions.length}{" "}
@@ -134,7 +142,9 @@ export default async function Home() {
 
           <div className="mt-6">
             {transactions.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">{t(locale, "no_entries")}</p>
+              <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+                {t(locale, "no_entries")}
+              </p>
             ) : (
               <ActivityTimeline initial={transactions} locale={locale} />
             )}

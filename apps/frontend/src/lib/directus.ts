@@ -66,8 +66,7 @@ export async function getTransactionsForBook(bookId: string) {
         "latitude",
         "longitude",
         "date_created",
-        "pictures.id",
-        "pictures.filename_download",
+        "pictures.id"
       ] as any,
       limit: -1,
     }),
