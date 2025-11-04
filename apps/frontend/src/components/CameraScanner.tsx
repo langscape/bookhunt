@@ -1,6 +1,10 @@
 "use client";
 
 import React from "react";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import type { IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+
 import Button from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
 
@@ -11,63 +15,73 @@ type Props = {
 export default function CameraScanner({ onDetected }: Props) {
   const { t } = useI18n();
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const controlsRef = React.useRef<IScannerControls | null>(null);
   const [active, setActive] = React.useState(false);
   const [supported, setSupported] = React.useState<boolean | null>(null);
-
-  React.useEffect(() => {
-    // Check BarcodeDetector support
-    // @ts-expect-error - not in TS lib on all versions
-    const ok = typeof window !== "undefined" && window.BarcodeDetector;
-    setSupported(!!ok);
+  const hints = React.useMemo(() => {
+    const map = new Map<DecodeHintType, unknown>();
+    map.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+    ]);
+    return map;
   }, []);
 
   React.useEffect(() => {
-    if (!active) return;
-    let stream: MediaStream | null = null;
-    let raf = 0;
-    let detector: any;
+    if (typeof window === "undefined") {
+      setSupported(false);
+      return;
+    }
+    const hasMediaDevices = !!navigator.mediaDevices?.getUserMedia;
+    setSupported(hasMediaDevices);
+  }, []);
 
-    async function start() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+  React.useEffect(() => {
+    if (!active || supported === false) return;
+
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const reader = new BrowserMultiFormatReader(hints, {
+      delayBetweenScanAttempts: 200,
+      delayBetweenScanSuccess: 400,
+    });
+
+    let stopped = false;
+
+    reader
+      .decodeFromVideoDevice(undefined, videoElement, (result, err, controls) => {
+        if (stopped) return;
+        if (result) {
+          onDetected(result.getText());
+          controlsRef.current = controls;
+          controls?.stop();
+          setActive(false);
         }
-        // @ts-expect-error
-        detector = new window.BarcodeDetector({ formats: ["ean_13", "upc_a", "ean_8"] });
-        const tick = async () => {
-          if (!videoRef.current) return;
-          try {
-            const codes = await detector.detect(videoRef.current);
-            const first = codes?.[0]?.rawValue as string | undefined;
-            if (first) {
-              onDetected(first);
-              stop();
-              return;
-            }
-          } catch {}
-          raf = requestAnimationFrame(tick);
-        };
-        raf = requestAnimationFrame(tick);
-      } catch {
-        stop();
+      })
+      .then((controls) => {
+        if (stopped) {
+          controls.stop();
+          return;
+        }
+        controlsRef.current = controls;
+      })
+      .catch(() => {
+        setActive(false);
+      });
+
+    return () => {
+      stopped = true;
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+      reader.reset();
+      if (videoElement) {
+        videoElement.srcObject = null;
       }
-    }
-
-    function stop() {
-      if (raf) cancelAnimationFrame(raf);
-      if (videoRef.current) videoRef.current.pause();
-      stream?.getTracks().forEach((t) => t.stop());
-      setActive(false);
-    }
-
-    start();
-    return () => stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+    };
+  }, [active, hints, onDetected, supported]);
 
   if (supported === false) {
     return (
