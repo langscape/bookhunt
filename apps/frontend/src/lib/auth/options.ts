@@ -36,7 +36,8 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.APPLE_CLIENT_ID ?? "",
       clientSecret: {
         keyId: process.env.APPLE_KEY_ID ?? "",
-        privateKey: process.env.APPLE_PRIVATE_KEY?.split("\\n").join("\n") ?? "",
+        privateKey:
+          process.env.APPLE_PRIVATE_KEY?.split("\\n").join("\n") ?? "",
         teamId: process.env.APPLE_TEAM_ID ?? "",
       },
     }),
@@ -52,7 +53,10 @@ export const authOptions: NextAuthOptions = {
               throw new Error("Missing credentials");
             }
 
-            const auth = await loginWithDirectus(credentials.email, credentials.password);
+            const auth = await loginWithDirectus(
+              credentials.email,
+              credentials.password
+            );
             if (!auth?.user?.id) {
               return null;
             }
@@ -60,19 +64,21 @@ export const authOptions: NextAuthOptions = {
             const accessTokenExpires = auth.expires_at
               ? new Date(auth.expires_at).getTime()
               : auth.expires
-                ? Date.now() + auth.expires * 1000
-                : undefined;
-
+              ? Date.now() + auth.expires * 1000
+              : undefined;
+            console.log("Token expires: ", accessTokenExpires);
             return {
               id: auth.user.id,
               email: auth.user.email ?? credentials.email,
               name:
                 (auth.user.display_name ??
-                [auth.user.first_name, auth.user.last_name].filter(Boolean).join(" ")) ||
-                  credentials.email,
+                  [auth.user.first_name, auth.user.last_name]
+                    .filter(Boolean)
+                    .join(" ")) ||
+                credentials.email,
               directusAccessToken: auth.access_token,
               directusRefreshToken: auth.refresh_token,
-              directusAccessTokenExpires,
+              accessTokenExpires,
             } as any;
           },
         })
@@ -102,7 +108,9 @@ export const authOptions: NextAuthOptions = {
       if (user && account?.provider === "credentials") {
         token.directusAccessToken = (user as any).directusAccessToken;
         token.directusRefreshToken = (user as any).directusRefreshToken;
-        token.directusAccessTokenExpires = (user as any).directusAccessTokenExpires;
+        token.directusAccessTokenExpires = (
+          user as any
+        ).directusAccessTokenExpires;
         token.directusUserId = user.id;
       }
 
@@ -117,25 +125,30 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      const accessTokenExpires = token.directusAccessTokenExpires as number | undefined;
+      const accessTokenExpires = token.directusAccessTokenExpires as
+        | number
+        | undefined;
       const shouldAttemptRefresh = Boolean(
         token.directusRefreshToken &&
           token.directusAccessToken &&
           accessTokenExpires &&
-          Date.now() > accessTokenExpires - 60_000,
+          Date.now() > accessTokenExpires - 60_000
       );
 
       if (shouldAttemptRefresh) {
         try {
-          const refreshed = await refreshDirectusToken(token.directusRefreshToken as string);
+          const refreshed = await refreshDirectusToken(
+            token.directusRefreshToken as string
+          );
           const refreshedExpiresAt = refreshed.expires_at
             ? new Date(refreshed.expires_at).getTime()
             : refreshed.expires
-              ? Date.now() + refreshed.expires * 1000
-              : undefined;
+            ? Date.now() + refreshed.expires * 1000
+            : undefined;
 
           token.directusAccessToken = refreshed.access_token;
-          token.directusRefreshToken = refreshed.refresh_token ?? token.directusRefreshToken;
+          token.directusRefreshToken =
+            refreshed.refresh_token ?? token.directusRefreshToken;
           token.directusAccessTokenExpires = refreshedExpiresAt;
         } catch (error) {
           console.error("Failed to refresh Directus token", error);
@@ -149,10 +162,16 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = (token.directusUserId as string) ?? (token.sub as string);
-        session.user.directusAccessToken = token.directusAccessToken as string | undefined;
-        session.user.directusRefreshToken = token.directusRefreshToken as string | undefined;
-        (session.user as any).directusAccessTokenExpires = token.directusAccessTokenExpires as number | undefined;
+        session.user.id =
+          (token.directusUserId as string) ?? (token.sub as string);
+        session.user.directusAccessToken = token.directusAccessToken as
+          | string
+          | undefined;
+        session.user.directusRefreshToken = token.directusRefreshToken as
+          | string
+          | undefined;
+        (session.user as any).directusAccessTokenExpires =
+          token.directusAccessTokenExpires as number | undefined;
       }
       return session;
     },
