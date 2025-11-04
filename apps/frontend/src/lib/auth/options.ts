@@ -5,7 +5,11 @@ import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import TwitterProvider from "next-auth/providers/twitter";
 
-import { ensureDirectusUser, loginWithDirectus } from "@/lib/auth/directus";
+import {
+  ensureDirectusUser,
+  loginWithDirectus,
+  refreshDirectusToken,
+} from "@/lib/auth/directus";
 
 const credentialsEnabled = Boolean(process.env.DIRECTUS_URL);
 
@@ -53,6 +57,12 @@ export const authOptions: NextAuthOptions = {
               return null;
             }
 
+            const accessTokenExpires = auth.expires_at
+              ? new Date(auth.expires_at).getTime()
+              : auth.expires
+                ? Date.now() + auth.expires * 1000
+                : undefined;
+
             return {
               id: auth.user.id,
               email: auth.user.email ?? credentials.email,
@@ -62,6 +72,7 @@ export const authOptions: NextAuthOptions = {
                   credentials.email,
               directusAccessToken: auth.access_token,
               directusRefreshToken: auth.refresh_token,
+              directusAccessTokenExpires,
             } as any;
           },
         })
@@ -91,6 +102,7 @@ export const authOptions: NextAuthOptions = {
       if (user && account?.provider === "credentials") {
         token.directusAccessToken = (user as any).directusAccessToken;
         token.directusRefreshToken = (user as any).directusRefreshToken;
+        token.directusAccessTokenExpires = (user as any).directusAccessTokenExpires;
         token.directusUserId = user.id;
       }
 
@@ -105,8 +117,32 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      if (token.directusRefreshToken && account?.provider === "credentials") {
-        token.directusAccessToken = (user as any)?.directusAccessToken ?? token.directusAccessToken;
+      const accessTokenExpires = token.directusAccessTokenExpires as number | undefined;
+      const shouldAttemptRefresh = Boolean(
+        token.directusRefreshToken &&
+          token.directusAccessToken &&
+          accessTokenExpires &&
+          Date.now() > accessTokenExpires - 60_000,
+      );
+
+      if (shouldAttemptRefresh) {
+        try {
+          const refreshed = await refreshDirectusToken(token.directusRefreshToken as string);
+          const refreshedExpiresAt = refreshed.expires_at
+            ? new Date(refreshed.expires_at).getTime()
+            : refreshed.expires
+              ? Date.now() + refreshed.expires * 1000
+              : undefined;
+
+          token.directusAccessToken = refreshed.access_token;
+          token.directusRefreshToken = refreshed.refresh_token ?? token.directusRefreshToken;
+          token.directusAccessTokenExpires = refreshedExpiresAt;
+        } catch (error) {
+          console.error("Failed to refresh Directus token", error);
+          delete token.directusAccessToken;
+          delete token.directusAccessTokenExpires;
+          delete token.directusRefreshToken;
+        }
       }
 
       return token;
@@ -116,6 +152,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = (token.directusUserId as string) ?? (token.sub as string);
         session.user.directusAccessToken = token.directusAccessToken as string | undefined;
         session.user.directusRefreshToken = token.directusRefreshToken as string | undefined;
+        (session.user as any).directusAccessTokenExpires = token.directusAccessTokenExpires as number | undefined;
       }
       return session;
     },

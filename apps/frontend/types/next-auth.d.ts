@@ -6,12 +6,14 @@ declare module "next-auth" {
       id?: string;
       directusAccessToken?: string;
       directusRefreshToken?: string;
+      directusAccessTokenExpires?: number;
     };
   }
 
   interface User {
     directusAccessToken?: string;
     directusRefreshToken?: string;
+    directusAccessTokenExpires?: number;
   }
 }
 
@@ -20,5 +22,6 @@ declare module "next-auth/jwt" {
     directusAccessToken?: string;
     directusRefreshToken?: string;
     directusUserId?: string;
+    directusAccessTokenExpires?: number;
   }
 }
