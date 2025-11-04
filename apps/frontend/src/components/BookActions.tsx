@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import Input, { Label, TextArea } from "@/components/ui/Input";
 import { useI18n } from "@/i18n/client";
-import { AuthPrompt } from "@/components/auth/AuthPrompt";
+import { useAuthDialog } from "@/components/auth/AuthDialogProvider";
 
 type Props = {
   bookId: string;
@@ -27,6 +27,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   const [success, setSuccess] = React.useState<string | null>(null);
   const [files, setFiles] = React.useState<File[]>([]);
   const [skipGuest, setSkipGuest] = React.useState(false);
+  const { openAuthDialog } = useAuthDialog();
 
   const isAuthenticated = status === "authenticated";
   const actorName = (session?.user?.name ?? reporter).trim();
@@ -95,24 +96,55 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
     }
   }
 
+  async function ensureAuthForAction(nextType: "FOUND" | "RELEASED") {
+    if (isAuthenticated || (skipGuest && reporter.trim().length > 0)) {
+      setType(nextType);
+      return;
+    }
+
+    const result = await openAuthDialog({
+      context: "comment",
+      allowGuest: true,
+      showGuestInput: true,
+      initialGuestName: reporter,
+    });
+
+    if (result.status === "authenticated") {
+      setSkipGuest(false);
+      setType(nextType);
+      return;
+    }
+
+    if (result.status === "guest") {
+      setSkipGuest(true);
+      setReporter(result.guestName);
+      setType(nextType);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="mb-5">
-        <AuthPrompt
-          context="comment"
-          guestName={reporter}
-          onGuestNameChange={setReporter}
-          skipActive={skipGuest}
-          onSkipChange={setSkipGuest}
-          showGuestInput={false}
-        />
-      </div>
+      {!isAuthenticated && !skipGuest && (
+        <p className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          Sign in or continue as a guest to record your activity.
+        </p>
+      )}
 
       <p className="text-sm text-slate-700">{t("set_free_explainer")}</p>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Button variant={type === "FOUND" ? "primary" : "outline"} onClick={() => setType("FOUND")}>{t("action_found")}</Button>
-        <Button variant={type === "RELEASED" ? "primary" : "outline"} onClick={() => setType("RELEASED")}>{t("action_free")}</Button>
+        <Button
+          variant={type === "FOUND" ? "primary" : "outline"}
+          onClick={() => void ensureAuthForAction("FOUND")}
+        >
+          {t("action_found")}
+        </Button>
+        <Button
+          variant={type === "RELEASED" ? "primary" : "outline"}
+          onClick={() => void ensureAuthForAction("RELEASED")}
+        >
+          {t("action_free")}
+        </Button>
       </div>
 
       {type && (
@@ -120,6 +152,11 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
           <div>
             <Label>{t("your_name")}</Label>
             <Input placeholder="e.g. Alex" value={reporter} onChange={(e) => setReporter(e.target.value)} />
+            {!isAuthenticated && skipGuest && (
+              <p className="mt-1 text-xs text-slate-500">
+                We’ll attach this name to this activity only.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>

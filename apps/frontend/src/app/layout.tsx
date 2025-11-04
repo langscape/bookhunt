@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { getServerLocale } from "@/lib/server/locale";
 import { Providers } from "@/components/Providers";
+import { SiteHeader } from "@/components/SiteHeader";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bookhunt.local";
@@ -37,7 +38,10 @@ export default function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <Providers locale={locale}>{children}</Providers>
+        <Providers locale={locale}>
+          <SiteHeader />
+          {children}
+        </Providers>
       </body>
     </html>
   );
