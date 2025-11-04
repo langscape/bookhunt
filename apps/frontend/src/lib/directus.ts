@@ -41,7 +41,7 @@ export interface PageBlock {
         description?: string | null;
         filename_download?: string | null;
         type?: string | null;
-        mime_type?: string | null;
+        //mime_type?: string | null;
         width?: number | null;
         height?: number | null;
       }
@@ -115,10 +115,15 @@ export interface BookTransaction {
 }
 
 export interface RichTransaction extends Omit<BookTransaction, "book"> {
-  book?: string | { id: string; Title?: string | null; user_created?: string | null };
+  book?:
+    | string
+    | { id: string; Title?: string | null; user_created?: string | null };
 }
 
-export async function createTransaction(data: Partial<BookTransaction>, authToken?: string) {
+export async function createTransaction(
+  data: Partial<BookTransaction>,
+  authToken?: string
+) {
   return getClient(authToken).request(createItem("BookTransactions", data));
 }
 
@@ -138,25 +143,31 @@ export async function getTransactionsForBook(bookId: string) {
         "latitude",
         "longitude",
         "date_created",
-        "pictures.id"
+        "pictures.id",
       ] as any,
       limit: -1,
-    }),
+    })
   );
 }
 
-export async function getBooksCreatedByUser(userId: string, authToken?: string) {
+export async function getBooksCreatedByUser(
+  userId: string,
+  authToken?: string
+) {
   return getClient(authToken).request(
     readItems("Books", {
       filter: { user_created: { _eq: userId } },
       sort: ["-date_created"],
       limit: 12,
       fields: ["id", "Title", "Author", "date_created", "status"] as any,
-    }),
+    })
   );
 }
 
-export async function getTransactionsCreatedByUser(userId: string, authToken?: string): Promise<RichTransaction[]> {
+export async function getTransactionsCreatedByUser(
+  userId: string,
+  authToken?: string
+): Promise<RichTransaction[]> {
   return getClient(authToken).request(
     readItems("BookTransactions", {
       filter: { user_created: { _eq: userId } },
@@ -173,11 +184,14 @@ export async function getTransactionsCreatedByUser(userId: string, authToken?: s
         "book.id",
         "book.Title",
       ] as any,
-    }),
+    })
   );
 }
 
-export async function getTransactionsForUserBooks(userId: string, authToken?: string): Promise<RichTransaction[]> {
+export async function getTransactionsForUserBooks(
+  userId: string,
+  authToken?: string
+): Promise<RichTransaction[]> {
   return getClient(authToken).request(
     readItems("BookTransactions", {
       filter: { book: { user_created: { _eq: userId } } },
@@ -194,7 +208,7 @@ export async function getTransactionsForUserBooks(userId: string, authToken?: st
         "book.id",
         "book.Title",
       ] as any,
-    }),
+    })
   );
 }
 
@@ -205,21 +219,20 @@ export async function getPublishedPageSlugs(): Promise<string[]> {
       fields: ["slug"] as any,
       limit: -1,
       sort: ["sort", "title"],
-    }),
+    })
   );
   return pages
     .map((page: any) => page?.slug)
-    .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+    .filter(
+      (slug): slug is string => typeof slug === "string" && slug.length > 0
+    );
 }
 
 export async function getPageBySlug(slug: string): Promise<Page | null> {
   const pages = await getClient().request(
     readItems("Pages", {
       filter: {
-        _and: [
-          { slug: { _eq: slug } },
-          { status: { _eq: "published" } },
-        ],
+        _and: [{ slug: { _eq: slug } }, { status: { _eq: "published" } }],
       },
       limit: 1,
       fields: [
@@ -235,7 +248,6 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
         "blocks.media.description",
         "blocks.media.filename_download",
         "blocks.media.type",
-        "blocks.media.mime_type",
         "blocks.media.width",
         "blocks.media.height",
         "blocks.media_caption",
@@ -243,7 +255,7 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
         "blocks.sort",
       ] as any,
       sort: ["sort"],
-    }),
+    })
   );
 
   if (!pages.length) {
@@ -252,7 +264,9 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
 
   const page = pages[0] as Page;
   if (page?.blocks?.length) {
-    page.blocks = [...page.blocks].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+    page.blocks = [...page.blocks].sort(
+      (a, b) => (a.sort ?? 0) - (b.sort ?? 0)
+    );
   }
 
   return page ?? null;
@@ -288,7 +302,7 @@ export async function getNavigationLinks(): Promise<NavigationBuckets> {
         "page.slug",
       ] as any,
       limit: -1,
-    }),
+    })
   );
 
   const header: NavigationLinkView[] = [];
