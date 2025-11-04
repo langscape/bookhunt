@@ -61,12 +61,11 @@ export const authOptions: NextAuthOptions = {
               return null;
             }
 
-            const accessTokenExpires = auth.expires_at
+            const directusAccessTokenExpires = auth.expires_at
               ? new Date(auth.expires_at).getTime()
               : auth.expires
               ? Date.now() + auth.expires * 1000
               : undefined;
-            console.log("Token expires: ", accessTokenExpires);
             return {
               id: auth.user.id,
               email: auth.user.email ?? credentials.email,
@@ -78,7 +77,8 @@ export const authOptions: NextAuthOptions = {
                 credentials.email,
               directusAccessToken: auth.access_token,
               directusRefreshToken: auth.refresh_token,
-              accessTokenExpires,
+              directusAccessTokenExpires,
+              directusCredentialsUser: true,
             } as any;
           },
         })
@@ -112,9 +112,13 @@ export const authOptions: NextAuthOptions = {
           user as any
         ).directusAccessTokenExpires;
         token.directusUserId = user.id;
+        (token as any).directusCredentialsUser = Boolean(
+          (user as any).directusCredentialsUser
+        );
       }
 
       if (user && account && account.provider !== "credentials") {
+        delete (token as any).directusCredentialsUser;
         if (!token.directusUserId) {
           const directusUser = await ensureDirectusUser({
             email: user.email!,
@@ -161,6 +165,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      if ((token as any).directusCredentialsUser && !token.directusAccessToken) {
+        return null;
+      }
       if (session.user) {
         session.user.id =
           (token.directusUserId as string) ?? (token.sub as string);

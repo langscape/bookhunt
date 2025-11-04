@@ -14,6 +14,7 @@ declare module "next-auth" {
     directusAccessToken?: string;
     directusRefreshToken?: string;
     directusAccessTokenExpires?: number;
+    directusCredentialsUser?: boolean;
   }
 }
 
@@ -23,5 +24,6 @@ declare module "next-auth/jwt" {
     directusRefreshToken?: string;
     directusUserId?: string;
     directusAccessTokenExpires?: number;
+    directusCredentialsUser?: boolean;
   }
 }
