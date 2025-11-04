@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/locale";
 import { t } from "@/i18n/dictionaries";
 
@@ -16,7 +16,9 @@ export type BookTransaction = {
   latitude?: number;
   longitude?: number;
   book?: BookRef | string;
-  pictures?: Array<{ id: string; filename_download?: string; title?: string }> | string[];
+  pictures?:
+    | Array<{ id: string; filename_download?: string; title?: string }>
+    | string[];
 };
 
 function MapThumb({ tx }: { tx: BookTransaction }) {
@@ -69,7 +71,10 @@ export default function ActivityTimeline({
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+      const params = new URLSearchParams({
+        offset: String(offset),
+        limit: String(limit),
+      });
       if (bookId) params.set("bookId", bookId);
       const res = await fetch(`/api/transactions?${params.toString()}`);
       const data = (await res.json()) as { items: BookTransaction[] };
@@ -99,20 +104,15 @@ export default function ActivityTimeline({
     return () => observer.disconnect();
   }, [loadMore]);
 
-  const lineOffsets = useMemo(
-    () => ["translate-x-0", "-translate-x-1", "translate-x-1"],
-    []
-  );
-
   return (
     <div className="relative">
-      {/* Slightly wavy backbone line */}
+      {/* Timeline backbone line */}
       <div
-        className="absolute left-5 top-0 bottom-0 w-px bg-slate-200"
+        className="pointer-events-none absolute left-5 top-0 bottom-0 w-px bg-slate-200"
         aria-hidden
       />
 
-      <ul className="space-y-8">
+      <ul className="relative">
         {items.map((tx, idx) => {
           const action = (tx.type || "").toUpperCase();
           const isFound = action === "FOUND";
@@ -129,17 +129,18 @@ export default function ActivityTimeline({
           const pictures = Array.isArray(tx.pictures) ? tx.pictures : [];
 
           return (
-            <li key={tx.id} className="relative pl-10">
-              {/* Dot on line */}
-              <span
-                className="absolute left-4 top-3 block h-2 w-2 -translate-x-1/2 rounded-full bg-emerald-500"
-                aria-hidden
-              />
-
+            <li
+              key={tx.id}
+              className={`relative pl-10 ${idx < items.length - 1 ? "pb-8" : ""}`}
+            >
               <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div
                   className={`flex flex-col gap-3 sm:items-start sm:justify-between ${
-                    hasMap ? (isEven ? "sm:flex-row" : "sm:flex-row-reverse") : ""
+                    hasMap
+                      ? isEven
+                        ? "sm:flex-row"
+                        : "sm:flex-row-reverse"
+                      : ""
                   }`}
                 >
                   <div className="min-w-0 flex-1">
@@ -160,14 +161,29 @@ export default function ActivityTimeline({
                     {pictures.length > 0 && (
                       <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
                         {pictures.map((p, i) => {
-                          const id = typeof (p as any) === "string" ? (p as string) : (p as any).id;
+                          const id =
+                            typeof (p as any) === "string"
+                              ? (p as string)
+                              : (p as any).id;
                           if (!id) return null;
-                          const base = process.env.NEXT_PUBLIC_DIRECTUS_URL || "";
+                          const base =
+                            process.env.NEXT_PUBLIC_DIRECTUS_URL || "";
                           const src = `${base}/assets/${id}`;
                           return (
-                            <a key={id + i} href={src} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border bg-slate-100">
+                            <a
+                              key={id + i}
+                              href={src}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block overflow-hidden rounded-md border bg-slate-100"
+                            >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={src} alt="Attachment" className="h-24 w-full object-cover" loading="lazy" />
+                              <img
+                                src={src}
+                                alt="Attachment"
+                                className="h-24 w-full object-cover"
+                                loading="lazy"
+                              />
                             </a>
                           );
                         })}
@@ -198,21 +214,15 @@ export default function ActivityTimeline({
                 </div>
               </article>
 
-              {/* Twirling connector to next item */}
+              {/* Straight connector to next item */}
               {idx < items.length - 1 && (
-                <div className="relative h-10" aria-hidden>
-                  <svg
-                    className="absolute left-5 -ml-[6px] h-full w-3 text-slate-300"
-                    viewBox="0 0 12 40"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M6 0 C12 6, 0 14, 6 20 S12 34, 6 40"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      fill="none"
-                    />
-                  </svg>
+                <div
+                  className="pointer-events-none absolute left-5 bottom-0 h-8 -translate-x-1/2"
+                  aria-hidden
+                >
+                  <div className="relative h-full w-px bg-slate-200">
+                    <span className="absolute left-1/2 top-1/2 block h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500" />
+                  </div>
                 </div>
               )}
             </li>
