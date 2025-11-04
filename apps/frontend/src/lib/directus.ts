@@ -1,4 +1,11 @@
-import { createDirectus, rest, staticToken, createItem, readItem, readItems } from "@directus/sdk";
+import {
+  createDirectus,
+  rest,
+  staticToken,
+  createItem,
+  readItem,
+  readItems,
+} from "@directus/sdk";
 
 // Directus typed schema for the fields we use in this project
 export interface BookItem {
@@ -15,6 +22,62 @@ export interface BookItem {
 export interface Schema {
   Books: BookItem[];
   BookTransactions: BookTransaction[];
+  Pages: Page[];
+  PageBlocks: PageBlock[];
+  NavigationLinks: NavigationLink[];
+}
+
+export type PageBlockType = "rich_text" | "media" | "video";
+
+export interface PageBlock {
+  id: string;
+  block_type: PageBlockType;
+  heading?: string | null;
+  body?: string | null;
+  media?:
+    | string
+    | {
+        id: string;
+        description?: string | null;
+        filename_download?: string | null;
+        type?: string | null;
+        mime_type?: string | null;
+        width?: number | null;
+        height?: number | null;
+      }
+    | null;
+  media_caption?: string | null;
+  video_url?: string | null;
+  sort?: number | null;
+}
+
+export interface Page {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string | null;
+  status?: string | null;
+  blocks?: PageBlock[] | null;
+}
+
+export type NavigationLocation = "header" | "footer" | "both";
+
+export interface NavigationLink {
+  id: string;
+  label: string;
+  location: NavigationLocation;
+  external_url?: string | null;
+  open_in_new_tab?: boolean | null;
+  sort?: number | null;
+  page?: string | { id: string; slug?: string | null } | null;
+  status?: string | null;
+}
+
+export interface NavigationLinkView {
+  id: string;
+  label: string;
+  href: string;
+  openInNewTab: boolean;
 }
 
 const url = process.env.DIRECTUS_URL as string;
@@ -133,4 +196,123 @@ export async function getTransactionsForUserBooks(userId: string, authToken?: st
       ] as any,
     }),
   );
+}
+
+export async function getPublishedPageSlugs(): Promise<string[]> {
+  const pages = await getClient().request(
+    readItems("Pages", {
+      filter: { status: { _eq: "published" } },
+      fields: ["slug"] as any,
+      limit: -1,
+      sort: ["sort", "title"],
+    }),
+  );
+  return pages
+    .map((page: any) => page?.slug)
+    .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+}
+
+export async function getPageBySlug(slug: string): Promise<Page | null> {
+  const pages = await getClient().request(
+    readItems("Pages", {
+      filter: {
+        _and: [
+          { slug: { _eq: slug } },
+          { status: { _eq: "published" } },
+        ],
+      },
+      limit: 1,
+      fields: [
+        "id",
+        "title",
+        "slug",
+        "description",
+        "blocks.id",
+        "blocks.block_type",
+        "blocks.heading",
+        "blocks.body",
+        "blocks.media.id",
+        "blocks.media.description",
+        "blocks.media.filename_download",
+        "blocks.media.type",
+        "blocks.media.mime_type",
+        "blocks.media.width",
+        "blocks.media.height",
+        "blocks.media_caption",
+        "blocks.video_url",
+        "blocks.sort",
+      ] as any,
+      sort: ["sort"],
+    }),
+  );
+
+  if (!pages.length) {
+    return null;
+  }
+
+  const page = pages[0] as Page;
+  if (page?.blocks?.length) {
+    page.blocks = [...page.blocks].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+  }
+
+  return page ?? null;
+}
+
+export interface NavigationBuckets {
+  header: NavigationLinkView[];
+  footer: NavigationLinkView[];
+}
+
+function resolveNavigationHref(link: NavigationLink): string | null {
+  if (link.external_url) {
+    return link.external_url;
+  }
+  const page = link.page as { slug?: string | null } | null;
+  if (page?.slug) {
+    return `/${page.slug}`;
+  }
+  return null;
+}
+
+export async function getNavigationLinks(): Promise<NavigationBuckets> {
+  const rawLinks = await getClient().request(
+    readItems("NavigationLinks", {
+      filter: { status: { _eq: "published" } },
+      sort: ["sort", "label"],
+      fields: [
+        "id",
+        "label",
+        "location",
+        "external_url",
+        "open_in_new_tab",
+        "page.slug",
+      ] as any,
+      limit: -1,
+    }),
+  );
+
+  const header: NavigationLinkView[] = [];
+  const footer: NavigationLinkView[] = [];
+
+  for (const link of rawLinks as NavigationLink[]) {
+    const href = resolveNavigationHref(link);
+    if (!href) continue;
+    const mapped: NavigationLinkView = {
+      id: link.id,
+      label: link.label,
+      href,
+      openInNewTab: Boolean(link.open_in_new_tab),
+    };
+    if (link.location === "header" || link.location === "both") {
+      header.push(mapped);
+    }
+    if (link.location === "footer" || link.location === "both") {
+      footer.push(mapped);
+    }
+  }
+
+  return {
+    header,
+    footer,
+  };
 }

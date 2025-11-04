@@ -4,6 +4,8 @@ import "./globals.css";
 import { getServerLocale } from "@/lib/server/locale";
 import { Providers } from "@/components/Providers";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { getNavigationLinks } from "@/lib/directus";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -31,18 +33,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const locale = getServerLocale();
+  const navigation = await getNavigationLinks();
   return (
     <html lang={locale}>
       <body className={inter.className}>
         <Providers locale={locale}>
-          <SiteHeader />
+          <SiteHeader navigation={navigation.header} />
           {children}
+          <SiteFooter navigation={navigation.footer} />
         </Providers>
       </body>
     </html>

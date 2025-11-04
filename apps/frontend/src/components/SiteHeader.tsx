@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Galada } from "next/font/google";
 
+import { NavigationLinkView } from "@/lib/directus";
 import { useAuthDialog } from "@/components/auth/AuthDialogProvider";
 
 const galada = Galada({
@@ -35,7 +36,11 @@ function PersonIcon() {
   );
 }
 
-export function SiteHeader() {
+interface SiteHeaderProps {
+  navigation?: NavigationLinkView[];
+}
+
+export function SiteHeader({ navigation = [] }: SiteHeaderProps) {
   const { data: session, status } = useSession();
   const { openAuthDialog } = useAuthDialog();
   const router = useRouter();
@@ -60,36 +65,53 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8 ">
-        <Link
-          href="/"
-          className={`text-5xl font-bold text-slate-900 ${galada.className}`}
-        >
-          Bookhunt
-        </Link>
-        <nav className="flex items-center gap-4 text-sm text-slate-600">
+      <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center gap-4">
           <Link
-            href="/books/new"
-            className="hidden rounded-full border border-violet-200 px-4 py-2 font-medium text-violet-700 transition hover:bg-violet-50 sm:inline-flex"
+            href="/"
+            className={`text-4xl font-bold text-slate-900 sm:text-5xl ${galada.className}`}
           >
-            Add book
+            Bookhunt
           </Link>
-          <button
-            type="button"
-            onClick={handleUserClick}
-            className="group flex items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-left shadow-sm transition hover:border-violet-300 hover:shadow"
-            aria-label={isAuthenticated ? "Open profile" : "Sign in"}
-          >
-            {isAuthenticated ? (
-              <UserAvatar name={displayName} />
-            ) : (
-              <PersonIcon />
-            )}
-            <span className="hidden text-sm font-medium text-slate-700 sm:inline">
-              {isAuthenticated ? displayName || "Profile" : "Sign in"}
-            </span>
-          </button>
-        </nav>
+          {navigation.length > 0 && (
+            <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              {navigation.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  target={item.openInNewTab ? "_blank" : undefined}
+                  rel={item.openInNewTab ? "noreferrer" : undefined}
+                  className="rounded-full px-3 py-1 font-medium transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+          <div className="ml-auto flex items-center gap-4 text-sm text-slate-600">
+            <Link
+              href="/books/new"
+              className="hidden rounded-full border border-violet-200 px-4 py-2 font-medium text-violet-700 transition hover:bg-violet-50 sm:inline-flex"
+            >
+              Add book
+            </Link>
+            <button
+              type="button"
+              onClick={handleUserClick}
+              className="group flex items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-left shadow-sm transition hover:border-violet-300 hover:shadow"
+              aria-label={isAuthenticated ? "Open profile" : "Sign in"}
+            >
+              {isAuthenticated ? (
+                <UserAvatar name={displayName} />
+              ) : (
+                <PersonIcon />
+              )}
+              <span className="hidden text-sm font-medium text-slate-700 sm:inline">
+                {isAuthenticated ? displayName || "Profile" : "Sign in"}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
   );
