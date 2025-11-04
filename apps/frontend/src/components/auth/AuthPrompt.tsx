@@ -72,6 +72,8 @@ export function AuthPrompt({
       password,
       redirect: false,
     });
+
+    console.log(res);
     setLoading(false);
     if (res?.error) {
       setError(res.error);
@@ -115,7 +117,8 @@ export function AuthPrompt({
       <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
         <p className="font-semibold">Signed in as {name}.</p>
         <p className="mt-1 leading-relaxed">
-          Your books and comments will sync with Directus so you can review your activity history and receive notifications.
+          Your books and comments will sync with Directus so you can review your
+          activity history and receive notifications.
         </p>
       </div>
     );
@@ -123,7 +126,9 @@ export function AuthPrompt({
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-900">{contextCopy.title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900">
+        {contextCopy.title}
+      </h2>
       <p className="mt-1 text-sm text-slate-600">{contextCopy.description}</p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -149,7 +154,9 @@ export function AuthPrompt({
             type="button"
             onClick={() => setView("signin")}
             className={`rounded-full px-3 py-1 ${
-              view === "signin" ? "bg-white text-slate-900 shadow" : "hover:text-slate-700"
+              view === "signin"
+                ? "bg-white text-slate-900 shadow"
+                : "hover:text-slate-700"
             }`}
           >
             Use email to sign in
@@ -158,17 +165,29 @@ export function AuthPrompt({
             type="button"
             onClick={() => setView("register")}
             className={`rounded-full px-3 py-1 ${
-              view === "register" ? "bg-white text-slate-900 shadow" : "hover:text-slate-700"
+              view === "register"
+                ? "bg-white text-slate-900 shadow"
+                : "hover:text-slate-700"
             }`}
           >
             Create a Bookhunt account
           </button>
         </div>
 
-        <form className="mt-4 grid gap-3" onSubmit={view === "signin" ? handleCredentialsSignIn : handleRegister}>
+        <form
+          className="mt-4 grid gap-3"
+          onSubmit={
+            view === "signin" ? handleCredentialsSignIn : handleRegister
+          }
+        >
           <div>
             <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div>
             <Label>Password</Label>
@@ -185,20 +204,34 @@ export function AuthPrompt({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>First name</Label>
-                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <Input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
               <div>
                 <Label>Last name</Label>
-                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <Input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
               </div>
               <div className="sm:col-span-2">
                 <Label>Display name</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="How others will see you" />
+                <Input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="How others will see you"
+                />
               </div>
             </div>
           )}
 
-          {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{error}</p>}
+          {error && (
+            <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
+              {error}
+            </p>
+          )}
           {successMessage && (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
               {successMessage}
@@ -206,14 +239,22 @@ export function AuthPrompt({
           )}
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Please wait…" : view === "signin" ? "Sign in with email" : "Register and continue"}
+            {loading
+              ? "Please wait…"
+              : view === "signin"
+              ? "Sign in with email"
+              : "Register and continue"}
           </Button>
         </form>
       </div>
 
       {!skipActive ? (
         <div className="mt-5">
-          <Button type="button" variant="ghost" onClick={() => onSkipChange(true)}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onSkipChange(true)}
+          >
             {contextCopy.skipCta}
           </Button>
         </div>
@@ -228,13 +269,15 @@ export function AuthPrompt({
             />
           </div>
           <p className="text-xs text-slate-500">
-            We’ll only use this name for this single {context === "book" ? "book entry" : "comment"}. You can create an account
-            later to claim it.
+            We’ll only use this name for this single{" "}
+            {context === "book" ? "book entry" : "comment"}. You can create an
+            account later to claim it.
           </p>
         </div>
       ) : (
         <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-          Add your name in the form below so other readers know who left the {context === "book" ? "book" : "comment"}.
+          Add your name in the form below so other readers know who left the{" "}
+          {context === "book" ? "book" : "comment"}.
         </p>
       )}
     </div>

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createDirectus, readItems, rest, staticToken } from "@directus/sdk";
+import { authentication, createDirectus, createUser, readItems, rest, staticToken, readUsers } from "@directus/sdk";
 
 type DirectusUser = {
   id: string;
@@ -29,26 +29,34 @@ function getAdminClient() {
   return createDirectus(directusUrl).with(staticToken(directusAdminToken)).with(rest());
 }
 
+function getAuthClient() {
+  if (!directusUrl) throw new Error("DIRECTUS_URL is not set");
+
+  return createDirectus(directusUrl).with(authentication("json", { autoRefresh: false })).with(rest());
+}
+
 export async function loginWithDirectus(email: string, password: string) {
-  const response = await fetch(`${directusUrl}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      password,
-      mode: "json",
-    }),
-  });
+  const client = getAuthClient();
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error?.errors?.[0]?.message ?? "Invalid credentials");
+  try {
+    const auth = (await client.login({ email, password }, { mode: "json" }));
+
+    const directusUser = await ensureDirectusUser({ email: email });
+
+    const expiresAt = auth.expires_at ?? (auth.expires ? Date.now() + auth.expires : null);
+    const normalizedExpiresAt =
+      typeof expiresAt === "number" ? new Date(expiresAt).toISOString() : expiresAt ?? new Date().toISOString();
+
+    const normalizedAuth = {
+      ...auth,
+      user: directusUser,
+      expires_at: normalizedExpiresAt,
+    };
+
+    return normalizedAuth;
+  } catch (error: any) {
+    throw new Error(error?.errors?.[0]?.message ?? error?.message ?? "Invalid credentials");
   }
-
-  const auth = (await response.json()) as DirectusAuthResponse;
-  return auth;
 }
 
 type EnsureDirectusUserArgs = {
@@ -59,14 +67,15 @@ type EnsureDirectusUserArgs = {
   provider?: string;
 };
 
+
 export async function ensureDirectusUser({ email, firstName, lastName, displayName, provider }: EnsureDirectusUserArgs) {
   const client = getAdminClient();
 
   const results = await client.request(
-    readItems("directus_users" as any, {
+    readUsers ({
       filter: { email: { _eq: email } },
       limit: 1,
-      fields: ["id", "email", "first_name", "last_name", "display_name"],
+      fields: ["id", "email", "first_name", "last_name"],
     }),
   );
 
@@ -141,26 +150,24 @@ export async function registerDirectusUser({ email, password, firstName, lastNam
     payload.role = defaultRoleId;
   }
 
-  const response = await fetch(`${directusUrl}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${directusAdminToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const client = getAdminClient();
+    const user = await client.request(
+      createUser(payload, {
+        fields: ["id", "email", "first_name", "last_name", "display_name"] as const,
+      }),
+    );
+    return { ok: true as const, user: user as DirectusUser };
+  } catch (error: any) {
+    const message = error?.errors?.[0]?.message ?? error?.message ?? "Failed to register";
+    const status = error?.response?.status;
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    const message = error?.errors?.[0]?.message ?? "Failed to register";
-    if (response.status === 400 || response.status === 409) {
+    if (status === 400 || status === 409) {
       return { ok: false as const, error: message };
     }
+
     throw new Error(message);
   }
-
-  const { data } = (await response.json()) as { data: DirectusUser };
-  return { ok: true as const, user: data };
 }
 
 type TokenRefreshResponse = {
