@@ -10,6 +10,8 @@ import ActivityTimeline, {
 } from "@/components/ActivityTimeline";
 import { authOptions } from "@/lib/auth/options";
 
+import { Galada } from "next/font/google";
+
 interface Book {
   id: string;
   Title: string;
@@ -47,6 +49,8 @@ interface Schema {
   Books: Book[];
   BookTransactions: BookTransaction[];
 }
+
+const galada = Galada({ subsets: ["latin"], weight: "400", display: "swap" });
 
 // get directus instance from env
 const directusUrl = process.env.DIRECTUS_URL;
@@ -89,7 +93,9 @@ export default async function Home() {
     <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8">
         <section className="flex flex-col gap-6 text-center">
-          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1
+            className={`text-balance text-4xl font-semibold tracking-tight sm:text-5xl ${galada.className}`}
+          >
             {t(locale, "welcome_title")}
           </h1>
 
@@ -98,7 +104,13 @@ export default async function Home() {
             aria-label={t(locale, "banner_placeholder")}
             className="relative mx-auto flex h-40 w-full max-w-4xl items-center justify-center overflow-hidden rounded-2xl bg-slate-100 text-slate-500 sm:h-52 lg:h-64"
           >
-            <Image src="/banner.png" alt="" fill className="object-cover" priority />
+            <Image
+              src="/banner.png"
+              alt=""
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
 
           <h2 className="text-xl font-medium text-slate-700">

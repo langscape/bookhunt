@@ -6,11 +6,13 @@ import { Providers } from "@/components/Providers";
 import { SiteHeader } from "@/components/SiteHeader";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bookhunt.local";
 
 export const metadata: Metadata = {
   title: "Bookhunt",
-  description: "Bookhunt frontend connected to Directus for managing book collections.",
+  description:
+    "Bookhunt frontend connected to Directus for managing book collections.",
   metadataBase: new URL(siteUrl),
   openGraph: {
     title: "Bookhunt",
