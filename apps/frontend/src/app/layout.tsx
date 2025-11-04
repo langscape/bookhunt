@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { I18nProvider } from "@/i18n/client";
 import { getServerLocale } from "@/lib/server/locale";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bookhunt.local";
@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <I18nProvider defaultLocale={locale}>{children}</I18nProvider>
+        <Providers locale={locale}>{children}</Providers>
       </body>
     </html>
   );

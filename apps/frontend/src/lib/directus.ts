@@ -17,17 +17,18 @@ export interface Schema {
 const url = process.env.DIRECTUS_URL as string;
 const token = process.env.DIRECTUS_TOKEN as string;
 
-// Server-side Directus client
-export const directus = createDirectus<Schema>(url)
-  .with(staticToken(token))
-  .with(rest());
-
-export async function createBook(data: Partial<BookItem>) {
-  return directus.request(createItem("Books", data));
+function getClient(authToken?: string) {
+  const base = createDirectus<Schema>(url).with(rest());
+  const appliedToken = authToken || token;
+  return appliedToken ? base.with(staticToken(appliedToken)) : base;
 }
 
-export async function getBook(id: string) {
-  return directus.request(readItem("Books", id));
+export async function createBook(data: Partial<BookItem>, authToken?: string) {
+  return getClient(authToken).request(createItem("Books", data));
+}
+
+export async function getBook(id: string, authToken?: string) {
+  return getClient(authToken).request(readItem("Books", id));
 }
 
 export type TransactionType = "FOUND" | "RELEASED";
@@ -46,12 +47,12 @@ export interface BookTransaction {
   pictures?: string[] | { id: string }[] | null;
 }
 
-export async function createTransaction(data: Partial<BookTransaction>) {
-  return directus.request(createItem("BookTransactions", data));
+export async function createTransaction(data: Partial<BookTransaction>, authToken?: string) {
+  return getClient(authToken).request(createItem("BookTransactions", data));
 }
 
 export async function getTransactionsForBook(bookId: string) {
-  return directus.request(
+  return getClient().request(
     readItems("BookTransactions", {
       filter: { book: { _eq: bookId } },
       sort: ["date_created"],

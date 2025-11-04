@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+
 import { createBook } from "@/lib/directus";
+import { authOptions } from "@/lib/auth/options";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
     const body = await req.json();
     // Whitelist accepted fields
     const payload = {
@@ -13,11 +17,22 @@ export async function POST(req: NextRequest) {
       status: "published",
     };
 
+    const guestName = typeof body?.guestName === "string" ? body.guestName.trim() : "";
+
+    if (!session && !guestName) {
+      return NextResponse.json({ error: "Sign in or provide your name before creating a book" }, { status: 401 });
+    }
+
+    if (!session && guestName) {
+      (payload as Record<string, unknown>).found_by = guestName;
+    }
+
     if (!payload.Title || payload.Title.trim().length === 0) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    const created = await createBook(payload);
+    const directusToken = session?.user?.directusAccessToken;
+    const created = await createBook(payload, directusToken);
     return NextResponse.json(created, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: "Failed to create book" }, { status: 500 });

@@ -2,21 +2,37 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Input, { Label, TextArea } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import CameraScanner from "@/components/CameraScanner";
+import { AuthPrompt } from "@/components/auth/AuthPrompt";
 import { lookupIsbn } from "@/lib/googleBooks";
 import { useI18n } from "@/i18n/client";
 
 export default function NewBookPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const { data: session, status } = useSession();
   const [isbn, setIsbn] = useState("");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [skipGuest, setSkipGuest] = useState(false);
+  const [guestName, setGuestName] = useState("");
+
+  const isAuthenticated = status === "authenticated";
+  const actorName = (session?.user?.name ?? guestName).trim();
+  const isReadyToSubmit = isAuthenticated || (skipGuest && actorName.length > 0);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      setSkipGuest(false);
+      setGuestName("");
+    }
+  }, [isAuthenticated]);
 
   async function handleLookup(targetIsbn?: string) {
     const value = (targetIsbn ?? isbn).trim();
@@ -38,12 +54,22 @@ export default function NewBookPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!isReadyToSubmit) {
+      setError("Please sign in or provide a display name before saving");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Title: title, Author: author, Description: description, ISBN: isbn }),
+        body: JSON.stringify({
+          Title: title,
+          Author: author,
+          Description: description,
+          ISBN: isbn,
+          guestName: !isAuthenticated ? actorName : undefined,
+        }),
       });
       const json = await res.json();
       setLoading(false);
@@ -66,6 +92,14 @@ export default function NewBookPage() {
           ← {t("back")}
         </button>
         <h1 className="text-3xl font-semibold">{t("add_new_book")}</h1>
+
+        <AuthPrompt
+          context="book"
+          guestName={guestName}
+          onGuestNameChange={setGuestName}
+          skipActive={skipGuest}
+          onSkipChange={setSkipGuest}
+        />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <div className="flex flex-col items-stretch gap-4">
@@ -109,7 +143,7 @@ export default function NewBookPage() {
               <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
             )}
 
-            <Button onClick={handleSubmit} disabled={loading} full>
+            <Button onClick={handleSubmit} disabled={loading || !isReadyToSubmit} full>
               {loading ? t("saving") : t("save_book")}
             </Button>
           </div>

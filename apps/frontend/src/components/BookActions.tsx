@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import Input, { Label, TextArea } from "@/components/ui/Input";
 import { useI18n } from "@/i18n/client";
+import { AuthPrompt } from "@/components/auth/AuthPrompt";
 
 type Props = {
   bookId: string;
@@ -12,6 +14,7 @@ type Props = {
 
 export default function BookActions({ bookId, onSubmitted }: Props) {
   const { t } = useI18n();
+  const { data: session, status } = useSession();
   const [type, setType] = React.useState<"FOUND" | "RELEASED" | null>(null);
   const [reporter, setReporter] = React.useState("");
   const [place, setPlace] = React.useState("");
@@ -23,6 +26,18 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [files, setFiles] = React.useState<File[]>([]);
+  const [skipGuest, setSkipGuest] = React.useState(false);
+
+  const isAuthenticated = status === "authenticated";
+  const actorName = (session?.user?.name ?? reporter).trim();
+  const canSubmit = Boolean(type) && (isAuthenticated || (skipGuest && actorName.length > 0));
+
+  React.useEffect(() => {
+    if (isAuthenticated && session?.user?.name) {
+      setReporter(session.user.name);
+      setSkipGuest(false);
+    }
+  }, [isAuthenticated, session?.user?.name]);
 
   async function getLocation() {
     setError(null);
@@ -39,13 +54,18 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
 
   async function submit() {
     if (!type) return;
+    if (!canSubmit) {
+      setError("Please sign in or add your name before submitting");
+      return;
+    }
     setLoading(true);
     setError(null);
     setSuccess(null);
     try {
       const form = new FormData();
       form.append("type", type);
-      if (reporter) form.append("reporter", reporter);
+      const reporterName = isAuthenticated ? session?.user?.name ?? reporter : reporter;
+      if (reporterName) form.append("reporter", reporterName);
       if (comment) form.append("comment", comment);
       if (city) form.append("city", city);
       if (country) form.append("country", country);
@@ -77,6 +97,17 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className="mb-5">
+        <AuthPrompt
+          context="comment"
+          guestName={reporter}
+          onGuestNameChange={setReporter}
+          skipActive={skipGuest}
+          onSkipChange={setSkipGuest}
+          showGuestInput={false}
+        />
+      </div>
+
       <p className="text-sm text-slate-700">{t("set_free_explainer")}</p>
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -135,9 +166,9 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">{success}</p>
           )}
 
-          <Button onClick={submit} disabled={loading} full>
-            {loading ? "…" : type === "FOUND" ? t("record_found") : t("record_release")}
-          </Button>
+            <Button onClick={submit} disabled={loading || !canSubmit} full>
+              {loading ? "…" : type === "FOUND" ? t("record_found") : t("record_release")}
+            </Button>
         </div>
       )}
     </div>

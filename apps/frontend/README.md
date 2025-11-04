@@ -12,6 +12,7 @@ This Next.js 14 application provides the Bookhunt user interface. It is styled w
    ```bash
    cp .env.example .env.local
    ```
+   Update the OAuth provider secrets (Google, Facebook, X, and Apple), `NEXTAUTH_SECRET`, and the Directus service token before running the app.
 3. Start the development server:
    ```bash
    npm run dev
@@ -19,6 +20,10 @@ This Next.js 14 application provides the Bookhunt user interface. It is styled w
 4. Visit [http://localhost:3000](http://localhost:3000) to view the app.
 
 The home page fetches the `bookhunt_books` collection from Directus. If the backend is unavailable, the UI falls back to an empty state message.
+
+## Authentication
+
+This frontend uses [NextAuth.js](https://next-auth.js.org/) to allow users to sign in with Google, Facebook, X (Twitter), Apple, or local Directus credentials. When a user creates an account, the information is mirrored into Directus so that their activity history can be tracked server-side. Unauthenticated visitors can still contribute by providing a display name when registering books or leaving comments.
 
 ## Building for Azure App Service
 

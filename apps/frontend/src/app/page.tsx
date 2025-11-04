@@ -1,11 +1,14 @@
 import Image from "next/image";
 
 import { createDirectus, rest, readItems, staticToken } from "@directus/sdk";
+import { getServerSession } from "next-auth";
+
 import { getServerLocale } from "@/lib/server/locale";
 import { t } from "@/i18n/dictionaries";
 import ActivityTimeline, {
   type BookTransaction,
 } from "@/components/ActivityTimeline";
+import { authOptions } from "@/lib/auth/options";
 
 interface Book {
   id: string;
@@ -57,6 +60,7 @@ const collection = "BookTransactions";
 
 export default async function Home() {
   const locale = getServerLocale();
+  const session = await getServerSession(authOptions);
   const transactions = (await directus.request(
     readItems(
       collection as any,
@@ -92,9 +96,9 @@ export default async function Home() {
           {/* Banner image placeholder */}
           <div
             aria-label={t(locale, "banner_placeholder")}
-            className="mx-auto h-40 w-full max-w-4xl rounded-2xl bg-slate-100 text-slate-500 sm:h-52 lg:h-64 flex items-center justify-center"
+            className="relative mx-auto flex h-40 w-full max-w-4xl items-center justify-center overflow-hidden rounded-2xl bg-slate-100 text-slate-500 sm:h-52 lg:h-64"
           >
-            <img src="/banner.png" alt="" className="h-full" />
+            <Image src="/banner.png" alt="" fill className="object-cover" priority />
           </div>
 
           <h2 className="text-xl font-medium text-slate-700">
@@ -111,6 +115,44 @@ export default async function Home() {
               {t(locale, "help_cta")}
             </a>
           </div>
+
+          {session?.user && (
+            <div className="grid w-full gap-4 rounded-3xl border border-slate-200 bg-white p-5 text-left sm:grid-cols-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {t(locale, "dashboard_history_title")}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t(locale, "dashboard_history_desc")}
+                </p>
+                <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                  {t(locale, "dashboard_history_badge")}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {t(locale, "dashboard_notifications_title")}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t(locale, "dashboard_notifications_desc")}
+                </p>
+                <span className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700">
+                  {t(locale, "dashboard_notifications_badge")}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {t(locale, "dashboard_bug_title")}
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t(locale, "dashboard_bug_desc")}
+                </p>
+                <span className="mt-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
+                  {t(locale, "dashboard_bug_badge")}
+                </span>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

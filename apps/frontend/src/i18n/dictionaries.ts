@@ -56,6 +56,18 @@ const en: Dict = {
   welcome_title: "Welcome to Bookhunt",
   welcome_intro:
     "Leave a book for someone to discover, or find one waiting for you. Each scan reveals its journey — connecting readers through curiosity, kindness, and a love for mindful reading. Let your next story find you.",
+  dashboard_history_title: "Your book history",
+  dashboard_history_desc:
+    "Revisit every book you have registered and follow their journey across the community.",
+  dashboard_history_badge: "Dashboard coming soon",
+  dashboard_notifications_title: "Notifications",
+  dashboard_notifications_desc:
+    "Get a nudge when someone finds your book or replies to one of your clues.",
+  dashboard_notifications_badge: "Stay tuned",
+  dashboard_bug_title: "Bug tracking",
+  dashboard_bug_desc:
+    "Help improve Bookhunt by reporting issues and keeping an eye on fixes in progress.",
+  dashboard_bug_badge: "Community beta",
 };
 
 const es: Dict = {
@@ -99,6 +111,18 @@ const es: Dict = {
   readers: "Lectores",
   latest_activity: "Actividad reciente",
   no_activity: "Sin actividad por ahora. ¡Sé el primero!",
+  dashboard_history_title: "Tu historial de libros",
+  dashboard_history_desc:
+    "Revisa cada libro que has registrado y sigue su viaje a través de la comunidad.",
+  dashboard_history_badge: "Panel disponible pronto",
+  dashboard_notifications_title: "Notificaciones",
+  dashboard_notifications_desc:
+    "Recibe un aviso cuando alguien encuentre tu libro o responda a una de tus pistas.",
+  dashboard_notifications_badge: "Mantente atento",
+  dashboard_bug_title: "Seguimiento de errores",
+  dashboard_bug_desc:
+    "Ayuda a mejorar Bookhunt informando problemas y siguiendo las correcciones en progreso.",
+  dashboard_bug_badge: "Beta comunitaria",
 };
 
 const pt: Dict = {
@@ -142,6 +166,18 @@ const pt: Dict = {
   readers: "Leitores",
   latest_activity: "Atividade recente",
   no_activity: "Sem atividade ainda. Seja o primeiro!",
+  dashboard_history_title: "Seu histórico de livros",
+  dashboard_history_desc:
+    "Revise cada livro que você registrou e acompanhe a jornada dele pela comunidade.",
+  dashboard_history_badge: "Painel em breve",
+  dashboard_notifications_title: "Notificações",
+  dashboard_notifications_desc:
+    "Receba um aviso quando alguém encontrar seu livro ou responder a uma das suas pistas.",
+  dashboard_notifications_badge: "Fique ligado",
+  dashboard_bug_title: "Rastreamento de bugs",
+  dashboard_bug_desc:
+    "Ajude a melhorar o Bookhunt relatando problemas e acompanhando as correções em andamento.",
+  dashboard_bug_badge: "Beta da comunidade",
 };
 
 const dicts: Record<Locale, Dict> = { en, es, pt } as const;
