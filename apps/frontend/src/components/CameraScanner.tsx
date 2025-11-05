@@ -52,15 +52,19 @@ export default function CameraScanner({ onDetected }: Props) {
     let stopped = false;
 
     reader
-      .decodeFromVideoDevice(undefined, videoElement, (result, err, controls) => {
-        if (stopped) return;
-        if (result) {
-          onDetected(result.getText());
-          controlsRef.current = controls;
-          controls?.stop();
-          setActive(false);
+      .decodeFromVideoDevice(
+        undefined,
+        videoElement,
+        (result, err, controls) => {
+          if (stopped) return;
+          if (result) {
+            onDetected(result.getText());
+            controlsRef.current = controls;
+            controls?.stop();
+            setActive(false);
+          }
         }
-      })
+      )
       .then((controls) => {
         if (stopped) {
           controls.stop();
@@ -76,7 +80,7 @@ export default function CameraScanner({ onDetected }: Props) {
       stopped = true;
       controlsRef.current?.stop();
       controlsRef.current = null;
-      reader.reset();
+      //reader.reset();
       if (videoElement) {
         videoElement.srcObject = null;
       }
