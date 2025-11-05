@@ -16,7 +16,7 @@ services:
       start_period: 30s
 
   directus:
-    image: directus/directus:latest
+    image: directus/directus:11.13.0
     ports:
       - 8055:8055
     volumes:
@@ -38,5 +38,22 @@ services:
 
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+
+      AUTH_PROVIDERS: "google"
+
+      AUTH_GOOGLE_DRIVER: ${AUTH_GOOGLE_DRIVER}
+      AUTH_GOOGLE_CLIENT_ID: ${AUTH_GOOGLE_CLIENT_ID}
+      AUTH_GOOGLE_CLIENT_SECRET: ${AUTH_GOOGLE_CLIENT_SECRET}
+      AUTH_GOOGLE_ISSUER_URL: ${AUTH_GOOGLE_ISSUER_URL}
+      AUTH_GOOGLE_SCOPE: ${AUTH_GOOGLE_SCOPE}
+      AUTH_GOOGLE_IDENTIFIER_KEY: ${AUTH_GOOGLE_IDENTIFIER_KEY}
+      AUTH_GOOGLE_ICON: ${AUTH_GOOGLE_ICON}
+      AUTH_GOOGLE_LABEL: ${AUTH_GOOGLE_LABEL}
+      AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION: "true"
+      AUTH_GOOGLE_REDIRECT_ALLOW_LIST: "http://localhost:8055/auth/google/callback"
+
+      SESSION_COOKIE_DOMAIN: "localhost"
+      SESSION_COOKIE_SAME_SITE: "lax"
+      SESSION_COOKIE_SECURE: false
 
       PUBLIC_URL: ${PUBLIC_URL}
