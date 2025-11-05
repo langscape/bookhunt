@@ -13,77 +13,110 @@ import {
 
 const credentialsEnabled = Boolean(process.env.DIRECTUS_URL);
 
+const providers: NextAuthOptions["providers"] = [];
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+if (googleClientId && googleClientSecret) {
+  providers.push(
+    GoogleProvider({
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    })
+  );
+}
+
+const facebookClientId = process.env.FACEBOOK_CLIENT_ID;
+const facebookClientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+if (facebookClientId && facebookClientSecret) {
+  providers.push(
+    FacebookProvider({
+      clientId: facebookClientId,
+      clientSecret: facebookClientSecret,
+    })
+  );
+}
+
+const twitterClientId = process.env.TWITTER_CLIENT_ID;
+const twitterClientSecret = process.env.TWITTER_CLIENT_SECRET;
+if (twitterClientId && twitterClientSecret) {
+  providers.push(
+    TwitterProvider({
+      clientId: twitterClientId,
+      clientSecret: twitterClientSecret,
+      version: "2.0",
+    })
+  );
+}
+
+const appleClientId = process.env.APPLE_CLIENT_ID;
+const appleKeyId = process.env.APPLE_KEY_ID;
+const applePrivateKey = process.env.APPLE_PRIVATE_KEY?.split("\\n").join("\n");
+const appleTeamId = process.env.APPLE_TEAM_ID;
+if (appleClientId && appleKeyId && applePrivateKey && appleTeamId) {
+  providers.push(
+    AppleProvider({
+      clientId: appleClientId,
+      clientSecret: {
+        keyId: appleKeyId,
+        privateKey: applePrivateKey,
+        teamId: appleTeamId,
+      },
+    })
+  );
+}
+
+if (credentialsEnabled) {
+  providers.push(
+    CredentialsProvider({
+      name: "Email & Password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Missing credentials");
+        }
+
+        const auth = await loginWithDirectus(
+          credentials.email,
+          credentials.password
+        );
+        if (!auth?.user?.id) {
+          return null;
+        }
+
+        const directusAccessTokenExpires = auth.expires_at
+          ? new Date(auth.expires_at).getTime()
+          : auth.expires
+          ? Date.now() + auth.expires * 1000
+          : undefined;
+        return {
+          id: auth.user.id,
+          email: auth.user.email ?? credentials.email,
+          name:
+            (auth.user.display_name ??
+              [auth.user.first_name, auth.user.last_name]
+                .filter(Boolean)
+                .join(" ")) ||
+            credentials.email,
+          directusAccessToken: auth.access_token,
+          directusRefreshToken: auth.refresh_token,
+          directusAccessTokenExpires,
+          directusCredentialsUser: true,
+        } as any;
+      },
+    })
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
-    }),
-    TwitterProvider({
-      clientId: process.env.TWITTER_CLIENT_ID ?? "",
-      clientSecret: process.env.TWITTER_CLIENT_SECRET ?? "",
-      version: "2.0",
-    }),
-    AppleProvider({
-      clientId: process.env.APPLE_CLIENT_ID ?? "",
-      clientSecret: {
-        keyId: process.env.APPLE_KEY_ID ?? "",
-        privateKey:
-          process.env.APPLE_PRIVATE_KEY?.split("\\n").join("\n") ?? "",
-        teamId: process.env.APPLE_TEAM_ID ?? "",
-      },
-    }),
-    credentialsEnabled
-      ? CredentialsProvider({
-          name: "Email & Password",
-          credentials: {
-            email: { label: "Email", type: "email" },
-            password: { label: "Password", type: "password" },
-          },
-          async authorize(credentials) {
-            if (!credentials?.email || !credentials.password) {
-              throw new Error("Missing credentials");
-            }
-
-            const auth = await loginWithDirectus(
-              credentials.email,
-              credentials.password
-            );
-            if (!auth?.user?.id) {
-              return null;
-            }
-
-            const directusAccessTokenExpires = auth.expires_at
-              ? new Date(auth.expires_at).getTime()
-              : auth.expires
-              ? Date.now() + auth.expires * 1000
-              : undefined;
-            return {
-              id: auth.user.id,
-              email: auth.user.email ?? credentials.email,
-              name:
-                (auth.user.display_name ??
-                  [auth.user.first_name, auth.user.last_name]
-                    .filter(Boolean)
-                    .join(" ")) ||
-                credentials.email,
-              directusAccessToken: auth.access_token,
-              directusRefreshToken: auth.refresh_token,
-              directusAccessTokenExpires,
-              directusCredentialsUser: true,
-            } as any;
-          },
-        })
-      : null,
-  ].filter(Boolean),
+  providers,
   callbacks: {
     async signIn({ user, account, profile }) {
       if (!user?.email) {
