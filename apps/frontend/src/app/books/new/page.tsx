@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -18,6 +19,8 @@ export default function NewBookPage() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
+  const [smallThumbnail, setSmallThumbnail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [skipGuest, setSkipGuest] = useState(false);
@@ -27,7 +30,8 @@ export default function NewBookPage() {
 
   const isAuthenticated = status === "authenticated";
   const actorName = (session?.user?.name ?? guestName).trim();
-  const isReadyToSubmit = isAuthenticated || (skipGuest && actorName.length > 0);
+  const isReadyToSubmit =
+    isAuthenticated || (skipGuest && actorName.length > 0);
 
   React.useEffect(() => {
     if (isAuthenticated) {
@@ -85,12 +89,16 @@ export default function NewBookPage() {
     setLoading(false);
     if (!data) {
       setError("Book not found from Google Books");
+      setSmallThumbnail("");
+      setThumbnail("");
       return;
     }
     setTitle(data.Title);
     setAuthor(data.Author ?? "");
     setDescription(data.Description ?? "");
     setIsbn(data.ISBN ?? value);
+    setSmallThumbnail(data.smallThumbnail ?? "");
+    setThumbnail(data.thumbnail ?? "");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -110,6 +118,8 @@ export default function NewBookPage() {
           Author: author,
           Description: description,
           ISBN: isbn,
+          thumbnail_small: smallThumbnail || undefined,
+          thumbnail: thumbnail || undefined,
           guestName: !isAuthenticated ? actorName : undefined,
         }),
       });
@@ -130,7 +140,10 @@ export default function NewBookPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 py-8 sm:py-12">
-        <button onClick={() => router.back()} className="text-sm text-violet-700 hover:text-violet-600">
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-violet-700 hover:text-violet-600"
+        >
           ← {t("back")}
         </button>
         <h1 className="text-3xl font-semibold">{t("add_new_book")}</h1>
@@ -138,21 +151,30 @@ export default function NewBookPage() {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           {isAuthenticated ? (
             <div className="flex flex-col gap-1 text-sm text-slate-700">
-              <span className="font-semibold">Signed in as {session?.user?.name ?? session?.user?.email}</span>
+              <span className="font-semibold">
+                Signed in as {session?.user?.name ?? session?.user?.email}
+              </span>
               <span>Your new books will be saved to your profile.</span>
             </div>
           ) : skipGuest ? (
             <div className="flex flex-col gap-3 text-sm text-slate-700">
               <span>
-                Continuing as <strong>{guestName}</strong>. We’ll only use this name for the books you create during this session.
+                Continuing as <strong>{guestName}</strong>. We’ll only use this
+                name for the books you create during this session.
               </span>
-              <Button type="button" variant="outline" onClick={() => void promptForAccess()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void promptForAccess()}
+              >
                 Update sign-in details
               </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-3 text-sm text-slate-700">
-              <span>Sign in or continue as a guest before creating a book.</span>
+              <span>
+                Sign in or continue as a guest before creating a book.
+              </span>
               <Button type="button" onClick={() => void promptForAccess()}>
                 Open sign-in options
               </Button>
@@ -170,6 +192,18 @@ export default function NewBookPage() {
             />
 
             <div className="grid grid-cols-1 gap-3">
+              {(smallThumbnail || thumbnail) && (
+                <div className="flex justify-center">
+                  <Image
+                    src={smallThumbnail || thumbnail}
+                    alt={title ? `Cover of ${title}` : "Book cover"}
+                    width={150}
+                    height={220}
+                    className="rounded-lg border border-slate-200 object-cover"
+                  />
+                </div>
+              )}
+
               <div>
                 <Label>{t("isbn")}</Label>
                 <div className="flex gap-2">
@@ -178,31 +212,55 @@ export default function NewBookPage() {
                     value={isbn}
                     onChange={(e) => setIsbn(e.target.value)}
                   />
-                  <Button type="button" variant="outline" onClick={() => handleLookup()}>{t("lookup")}</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleLookup()}
+                  >
+                    {t("lookup")}
+                  </Button>
                 </div>
               </div>
 
               <div>
                 <Label>{t("title")}</Label>
-                <Input placeholder={t("title")} value={title} onChange={(e) => setTitle(e.target.value)} />
+                <Input
+                  placeholder={t("title")}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
               </div>
 
               <div>
                 <Label>{t("author")}</Label>
-                <Input placeholder={t("author")} value={author} onChange={(e) => setAuthor(e.target.value)} />
+                <Input
+                  placeholder={t("author")}
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                />
               </div>
 
               <div>
                 <Label>{t("description")}</Label>
-                <TextArea placeholder={t("description")} value={description} onChange={(e) => setDescription(e.target.value)} />
+                <TextArea
+                  placeholder={t("description")}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
               </div>
             </div>
 
             {error && (
-              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
+              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                {error}
+              </p>
             )}
 
-            <Button onClick={handleSubmit} disabled={loading || !isReadyToSubmit} full>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !isReadyToSubmit}
+              full
+            >
               {loading ? t("saving") : t("save_book")}
             </Button>
           </div>

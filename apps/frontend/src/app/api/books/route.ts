@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
       Author: body?.Author as string | undefined,
       Description: body?.Description as string | undefined,
       ISBN: body?.ISBN as string | undefined,
+      thumbnail_small: body?.thumbnail_small as string | undefined,
+      thumbnail: body?.thumbnail as string | undefined,
       status: "published",
     };
 

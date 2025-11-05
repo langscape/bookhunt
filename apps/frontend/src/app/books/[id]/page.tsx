@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { getBook, getTransactionsForBook } from "@/lib/directus";
 import { computeStats } from "@/lib/stats";
 import BookActions from "@/components/BookActions";
@@ -12,15 +14,31 @@ export default async function BookPage({ params }: Props) {
   const txs = await getTransactionsForBook(params.id);
   const stats = computeStats(txs);
   const locale = getServerLocale();
+  const coverSrc = book.thumbnail ?? book.thumbnail_small ?? null;
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
         <a href="/" className="text-sm text-violet-700 hover:text-violet-600">← {t(locale, "back")}</a>
         <header className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h1 className="text-2xl font-semibold text-emerald-700">{book.Title}</h1>
-          {book.Author && <p className="text-sm text-slate-700">by {book.Author}</p>}
-          {book.Description && <p className="mt-3 text-sm text-slate-600">{book.Description}</p>}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            {coverSrc && (
+              <div className="flex shrink-0 items-start justify-center">
+                <Image
+                  src={coverSrc}
+                  alt={book.Title ? `Cover of ${book.Title}` : "Book cover"}
+                  width={180}
+                  height={260}
+                  className="rounded-xl border border-slate-200 object-cover"
+                />
+              </div>
+            )}
+            <div>
+              <h1 className="text-2xl font-semibold text-emerald-700">{book.Title}</h1>
+              {book.Author && <p className="text-sm text-slate-700">by {book.Author}</p>}
+              {book.Description && <p className="mt-3 text-sm text-slate-600">{book.Description}</p>}
+            </div>
+          </div>
         </header>
 
         <BookActions bookId={params.id} />

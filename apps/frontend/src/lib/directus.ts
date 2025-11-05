@@ -14,6 +14,8 @@ export interface BookItem {
   Author?: string | null;
   Description?: string | null;
   ISBN?: string | null;
+  thumbnail_small?: string | null;
+  thumbnail?: string | null;
   status?: string | null;
   date_created?: string;
   user_created?: string | null;
