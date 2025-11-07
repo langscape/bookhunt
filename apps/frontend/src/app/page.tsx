@@ -1,15 +1,12 @@
 import Image from "next/image";
 
 import { createDirectus, rest, readItems, staticToken } from "@directus/sdk";
-import { getServerSession } from "next-auth";
 
 import { getServerLocale } from "@/lib/server/locale";
 import { t } from "@/i18n/dictionaries";
 import ActivityTimeline, {
   type BookTransaction,
 } from "@/components/ActivityTimeline";
-import { authOptions } from "@/lib/auth/options";
-
 import { Galada } from "next/font/google";
 
 interface Book {
@@ -64,7 +61,6 @@ const collection = "BookTransactions";
 
 export default async function Home() {
   const locale = getServerLocale();
-  const session = await getServerSession(authOptions);
   const transactions = (await directus.request(
     readItems(
       collection as any,
@@ -113,58 +109,57 @@ export default async function Home() {
             />
           </div>
 
-          <h2 className="text-xl font-medium text-slate-700">
-            {t(locale, "hero_subtitle")}
-          </h2>
-          <p className="mx-auto max-w-3xl text-pretty text-lg text-slate-600">
-            {t(locale, "welcome_intro")}
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a
-              className="inline-flex items-center justify-center rounded-full bg-violet-700 px-6 py-3 text-sm font-medium text-white transition hover:bg-violet-600"
-              href="/books/new"
-            >
-              {t(locale, "help_cta")}
-            </a>
-          </div>
+      <h2 className="text-xl font-medium text-slate-700">
+        {t(locale, "hero_subtitle")}
+      </h2>
+      <p className="mx-auto max-w-3xl text-pretty text-lg text-slate-600">
+        {t(locale, "welcome_intro")}
+      </p>
+      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <a
+          className="inline-flex items-center justify-center rounded-full bg-violet-700 px-6 py-3 text-sm font-medium text-white transition hover:bg-violet-600"
+          href="/books/new"
+        >
+          {t(locale, "help_cta")}
+        </a>
+      </div>
 
-          {session?.user && (
-            <div className="grid w-full gap-4 rounded-3xl border border-slate-200 bg-white p-5 text-left sm:grid-cols-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {t(locale, "dashboard_history_title")}
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  {t(locale, "dashboard_history_desc")}
-                </p>
-                <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                  {t(locale, "dashboard_history_badge")}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {t(locale, "dashboard_notifications_title")}
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  {t(locale, "dashboard_notifications_desc")}
-                </p>
-                <span className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700">
-                  {t(locale, "dashboard_notifications_badge")}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {t(locale, "dashboard_bug_title")}
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  {t(locale, "dashboard_bug_desc")}
-                </p>
-                <span className="mt-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
-                  {t(locale, "dashboard_bug_badge")}
-                </span>
-              </div>
-            </div>
-          )}
+      <div className="grid w-full gap-4 rounded-3xl border border-slate-200 bg-white p-5 text-left sm:grid-cols-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {t(locale, "dashboard_history_title")}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {t(locale, "dashboard_history_desc")}
+          </p>
+          <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+            {t(locale, "dashboard_history_badge")}
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {t(locale, "dashboard_notifications_title")}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {t(locale, "dashboard_notifications_desc")}
+          </p>
+          <span className="mt-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700">
+            {t(locale, "dashboard_notifications_badge")}
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {t(locale, "dashboard_bug_title")}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {t(locale, "dashboard_bug_desc")}
+          </p>
+          <span className="mt-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
+            {t(locale, "dashboard_bug_badge")}
+          </span>
+        </div>
+      </div>
+
         </section>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

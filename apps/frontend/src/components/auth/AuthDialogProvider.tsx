@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
 
 import { AuthPrompt, type AuthPromptContext } from "@/components/auth/AuthPrompt";
 
@@ -24,7 +23,6 @@ interface AuthDialogContextValue {
 const AuthDialogContext = createContext<AuthDialogContextValue | null>(null);
 
 export function AuthDialogProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
   const [options, setOptions] = useState<AuthDialogOptions | null>(null);
   const resolverRef = useRef<((result: AuthDialogResult) => void) | null>(null);
 
@@ -40,13 +38,6 @@ export function AuthDialogProvider({ children }: { children: React.ReactNode }) 
       setOptions(opts);
     });
   }, []);
-
-  useEffect(() => {
-    if (!options) return;
-    if (status === "authenticated") {
-      closeDialog({ status: "authenticated" });
-    }
-  }, [status, options, closeDialog]);
 
   useEffect(() => {
     if (!options) return;

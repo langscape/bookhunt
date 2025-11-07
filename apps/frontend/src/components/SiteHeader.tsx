@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Galada } from "next/font/google";
 
 import { NavigationLinkView } from "@/lib/directus";
@@ -41,21 +39,11 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ navigation = [] }: SiteHeaderProps) {
-  const { data: session, status } = useSession();
   const { openAuthDialog } = useAuthDialog();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const isAuthenticated = status === "authenticated" && !!session?.user;
-  const displayName = session?.user?.name ?? session?.user?.email ?? "";
+  const isAuthenticated = false;
+  const displayName = "";
 
   async function handleUserClick() {
-    if (isAuthenticated) {
-      if (pathname !== "/profile") {
-        router.push("/profile");
-      }
-      return;
-    }
     await openAuthDialog({
       context: "general",
       allowGuest: false,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getProviders, signIn, useSession } from "next-auth/react";
 
 import Button from "@/components/ui/Button";
 import Input, { Label } from "@/components/ui/Input";
@@ -89,49 +88,23 @@ export function AuthPrompt({
   onGuestComplete,
   onDismiss,
 }: AuthPromptProps) {
-  const { data: session, status } = useSession();
   const [view, setView] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [guestMode, setGuestMode] = useState(false);
   const [guestName, setGuestName] = useState(initialGuestName);
-  const [availableProviders, setAvailableProviders] = useState<ProviderId[]>([]);
+  const availableProviders = useMemo(
+    () => Object.keys(providerDetails) as ProviderId[],
+    []
+  );
 
   useEffect(() => {
     setGuestName(initialGuestName);
   }, [initialGuestName]);
-
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const providers = await getProviders();
-        if (!active) {
-          return;
-        }
-        const enabled = Object.keys(providers ?? {}).filter(
-          (provider): provider is ProviderId => provider in providerDetails
-        );
-        setAvailableProviders(enabled);
-      } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-          console.error("Failed to fetch auth providers", err);
-        }
-        setAvailableProviders([]);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const isAuthenticated = status === "authenticated" && !!session?.user;
 
   const contextCopy = useMemo(() => {
     if (context === "book") {
@@ -161,52 +134,18 @@ export function AuthPrompt({
     };
   }, [context]);
 
-  async function handleCredentialsSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
-    setLoading(true);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-    if (res?.error) {
-      setError(res.error);
-    }
+  function showUnimplementedMessage() {
+    setError("Sign-in logic has not been wired up yet.");
   }
 
-  async function handleRegister(e: React.FormEvent) {
+  function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
-    setLoading(true);
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          firstName: firstName || undefined,
-          lastName: lastName || undefined,
-          displayName: displayName || undefined,
-        }),
-      });
-      const payload = await response.json();
-      setLoading(false);
-      if (!response.ok) {
-        setError(payload?.error ?? "Unable to register");
-        return;
-      }
-      setSuccessMessage("Account created! Signing you in…");
-      await signIn("credentials", { email, password, redirect: false });
-    } catch (err) {
-      setLoading(false);
-      setError("Unexpected error");
-    }
+    showUnimplementedMessage();
+  }
+
+  function handleRegisterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    showUnimplementedMessage();
   }
 
   function handleGuestSubmit(e: React.FormEvent) {
@@ -217,19 +156,6 @@ export function AuthPrompt({
     }
     setError(null);
     onGuestComplete?.(guestName.trim());
-  }
-
-  if (isAuthenticated) {
-    const name = session?.user?.name ?? session?.user?.email ?? "your account";
-    return (
-      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
-        <p className="font-semibold">Signed in as {name}.</p>
-        <p className="mt-1 leading-relaxed">
-          Your books and comments will sync with Directus so you can review your
-          activity history and receive notifications.
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -274,11 +200,8 @@ export function AuthPrompt({
                 type="button"
                 full
                 className={`${meta.className} gap-2`}
-                onClick={() => {
-                  setError(null);
-                  setSuccessMessage(null);
-                  void signIn(provider, { callbackUrl: window.location.href });
-                }}
+                onClick={() => showUnimplementedMessage()}
+                disabled
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">
                   {meta.icon}
@@ -289,6 +212,9 @@ export function AuthPrompt({
               </Button>
             );
           })}
+          <p className="text-center text-xs text-slate-500">
+            Social sign-in buttons are ready for wiring but currently disabled.
+          </p>
         </div>
       )}
 
@@ -296,7 +222,10 @@ export function AuthPrompt({
         <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
           <button
             type="button"
-            onClick={() => setView("signin")}
+            onClick={() => {
+              setError(null);
+              setView("signin");
+            }}
             className={`rounded-full px-3 py-1 ${
               view === "signin"
                 ? "bg-white text-slate-900 shadow"
@@ -307,7 +236,10 @@ export function AuthPrompt({
           </button>
           <button
             type="button"
-            onClick={() => setView("register")}
+            onClick={() => {
+              setError(null);
+              setView("register");
+            }}
             className={`rounded-full px-3 py-1 ${
               view === "register"
                 ? "bg-white text-slate-900 shadow"
@@ -320,9 +252,7 @@ export function AuthPrompt({
 
         <form
           className="mt-4 grid gap-3"
-          onSubmit={
-            view === "signin" ? handleCredentialsSignIn : handleRegister
-          }
+          onSubmit={view === "signin" ? handleEmailSubmit : handleRegisterSubmit}
         >
           <div>
             <Label>Email</Label>
@@ -376,18 +306,9 @@ export function AuthPrompt({
               {error}
             </p>
           )}
-          {successMessage && (
-            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
-              {successMessage}
-            </p>
-          )}
 
-          <Button type="submit" disabled={loading}>
-            {loading
-              ? "Please wait…"
-              : view === "signin"
-              ? "Sign in with email"
-              : "Register and continue"}
+          <Button type="submit">
+            {view === "signin" ? "Sign in with email" : "Register and continue"}
           </Button>
         </form>
       </div>

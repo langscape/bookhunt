@@ -3,7 +3,6 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import Input, { Label, TextArea } from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import CameraScanner from "@/components/CameraScanner";
@@ -14,7 +13,6 @@ import { useI18n } from "@/i18n/client";
 export default function NewBookPage() {
   const router = useRouter();
   const { t } = useI18n();
-  const { data: session, status } = useSession();
   const [isbn, setIsbn] = useState("");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -23,46 +21,10 @@ export default function NewBookPage() {
   const [smallThumbnail, setSmallThumbnail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [skipGuest, setSkipGuest] = useState(false);
   const [guestName, setGuestName] = useState("");
   const { openAuthDialog } = useAuthDialog();
-  const [dialogHandled, setDialogHandled] = useState(false);
-
-  const isAuthenticated = status === "authenticated";
-  const actorName = (session?.user?.name ?? guestName).trim();
-  const isReadyToSubmit =
-    isAuthenticated || (skipGuest && actorName.length > 0);
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      setSkipGuest(false);
-      setGuestName("");
-      setDialogHandled(true);
-    }
-  }, [isAuthenticated]);
-
-  React.useEffect(() => {
-    if (status === "unauthenticated" && !dialogHandled) {
-      setDialogHandled(true);
-      void (async () => {
-        const result = await openAuthDialog({
-          context: "book",
-          allowGuest: true,
-          showGuestInput: true,
-          initialGuestName: guestName,
-        });
-        if (result.status === "guest") {
-          setSkipGuest(true);
-          setGuestName(result.guestName);
-        } else if (result.status === "authenticated") {
-          setSkipGuest(false);
-          setGuestName("");
-        } else {
-          router.back();
-        }
-      })();
-    }
-  }, [status, dialogHandled, openAuthDialog, guestName, router]);
+  const actorName = guestName.trim();
+  const isReadyToSubmit = actorName.length > 0;
 
   async function promptForAccess() {
     const result = await openAuthDialog({
@@ -72,11 +34,7 @@ export default function NewBookPage() {
       initialGuestName: guestName,
     });
     if (result.status === "guest") {
-      setSkipGuest(true);
       setGuestName(result.guestName);
-    } else if (result.status === "authenticated") {
-      setSkipGuest(false);
-      setGuestName("");
     }
   }
 
@@ -105,7 +63,7 @@ export default function NewBookPage() {
     e.preventDefault();
     setError(null);
     if (!isReadyToSubmit) {
-      setError("Please sign in or provide a display name before saving");
+      setError("Please provide a display name before saving");
       return;
     }
     setLoading(true);
@@ -120,7 +78,7 @@ export default function NewBookPage() {
           ISBN: isbn,
           thumbnail_small: smallThumbnail || undefined,
           thumbnail: thumbnail || undefined,
-          guestName: !isAuthenticated ? actorName : undefined,
+          guestName: actorName || undefined,
         }),
       });
       const json = await res.json();
@@ -149,17 +107,10 @@ export default function NewBookPage() {
         <h1 className="text-3xl font-semibold">{t("add_new_book")}</h1>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          {isAuthenticated ? (
-            <div className="flex flex-col gap-1 text-sm text-slate-700">
-              <span className="font-semibold">
-                Signed in as {session?.user?.name ?? session?.user?.email}
-              </span>
-              <span>Your new books will be saved to your profile.</span>
-            </div>
-          ) : skipGuest ? (
+          {actorName ? (
             <div className="flex flex-col gap-3 text-sm text-slate-700">
               <span>
-                Continuing as <strong>{guestName}</strong>. We’ll only use this
+                Continuing as <strong>{actorName}</strong>. We’ll only use this
                 name for the books you create during this session.
               </span>
               <Button
@@ -167,16 +118,17 @@ export default function NewBookPage() {
                 variant="outline"
                 onClick={() => void promptForAccess()}
               >
-                Update sign-in details
+                Update display name
               </Button>
             </div>
           ) : (
             <div className="flex flex-col gap-3 text-sm text-slate-700">
               <span>
-                Sign in or continue as a guest before creating a book.
+                Set a display name before creating a book so others know who
+                released it.
               </span>
               <Button type="button" onClick={() => void promptForAccess()}>
-                Open sign-in options
+                Choose display name
               </Button>
             </div>
           )}

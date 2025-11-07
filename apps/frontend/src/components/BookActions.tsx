@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { useSession } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import Input, { Label, TextArea } from "@/components/ui/Input";
 import { useI18n } from "@/i18n/client";
@@ -14,7 +13,7 @@ type Props = {
 
 export default function BookActions({ bookId, onSubmitted }: Props) {
   const { t } = useI18n();
-  const { data: session, status } = useSession();
+  const { openAuthDialog } = useAuthDialog();
   const [type, setType] = React.useState<"FOUND" | "RELEASED" | null>(null);
   const [reporter, setReporter] = React.useState("");
   const [place, setPlace] = React.useState("");
@@ -26,19 +25,8 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [files, setFiles] = React.useState<File[]>([]);
-  const [skipGuest, setSkipGuest] = React.useState(false);
-  const { openAuthDialog } = useAuthDialog();
-
-  const isAuthenticated = status === "authenticated";
-  const actorName = (session?.user?.name ?? reporter).trim();
-  const canSubmit = Boolean(type) && (isAuthenticated || (skipGuest && actorName.length > 0));
-
-  React.useEffect(() => {
-    if (isAuthenticated && session?.user?.name) {
-      setReporter(session.user.name);
-      setSkipGuest(false);
-    }
-  }, [isAuthenticated, session?.user?.name]);
+  const actorName = reporter.trim();
+  const canSubmit = Boolean(type) && actorName.length > 0;
 
   async function getLocation() {
     setError(null);
@@ -56,7 +44,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   async function submit() {
     if (!type) return;
     if (!canSubmit) {
-      setError("Please sign in or add your name before submitting");
+      setError("Please add your name before submitting");
       return;
     }
     setLoading(true);
@@ -65,8 +53,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
     try {
       const form = new FormData();
       form.append("type", type);
-      const reporterName = isAuthenticated ? session?.user?.name ?? reporter : reporter;
-      if (reporterName) form.append("reporter", reporterName);
+      if (actorName) form.append("reporter", actorName);
       if (comment) form.append("comment", comment);
       if (city) form.append("city", city);
       if (country) form.append("country", country);
@@ -97,7 +84,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
   }
 
   async function ensureAuthForAction(nextType: "FOUND" | "RELEASED") {
-    if (isAuthenticated || (skipGuest && reporter.trim().length > 0)) {
+    if (actorName.length > 0) {
       setType(nextType);
       return;
     }
@@ -110,13 +97,11 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
     });
 
     if (result.status === "authenticated") {
-      setSkipGuest(false);
       setType(nextType);
       return;
     }
 
     if (result.status === "guest") {
-      setSkipGuest(true);
       setReporter(result.guestName);
       setType(nextType);
     }
@@ -124,9 +109,9 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      {!isAuthenticated && !skipGuest && (
+      {actorName.length === 0 && (
         <p className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          Sign in or continue as a guest to record your activity.
+          Add your display name before recording your activity or continue as a guest to keep the flow moving.
         </p>
       )}
 
@@ -152,7 +137,7 @@ export default function BookActions({ bookId, onSubmitted }: Props) {
           <div>
             <Label>{t("your_name")}</Label>
             <Input placeholder="e.g. Alex" value={reporter} onChange={(e) => setReporter(e.target.value)} />
-            {!isAuthenticated && skipGuest && (
+            {actorName.length > 0 && (
               <p className="mt-1 text-xs text-slate-500">
                 We’ll attach this name to this activity only.
               </p>

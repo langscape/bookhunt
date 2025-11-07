@@ -1,15 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth/options";
-import {
-  getBooksCreatedByUser,
-  getTransactionsCreatedByUser,
-  getTransactionsForUserBooks,
-  type BookItem,
-  type RichTransaction,
-} from "@/lib/directus";
+import type { BookItem, RichTransaction } from "@/lib/directus";
 import { SignOutButton } from "@/components/SignOutButton";
 
 function formatDate(value?: string) {
@@ -93,22 +84,11 @@ function ActivityList({ items, emptyLabel }: { items: RichTransaction[]; emptyLa
   );
 }
 
-export default async function ProfilePage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    redirect("/");
-  }
-
-  const userId = session.user.id;
-  const directusToken = session.user.directusAccessToken;
-
-  const [books, userActivity, bookActivity] = await Promise.all([
-    getBooksCreatedByUser(userId, directusToken),
-    getTransactionsCreatedByUser(userId, directusToken),
-    getTransactionsForUserBooks(userId, directusToken),
-  ]);
-
-  const displayName = session.user.name ?? session.user.email ?? "Reader";
+export default function ProfilePage() {
+  const displayName = "Your profile";
+  const books: BookItem[] = [];
+  const userActivity: RichTransaction[] = [];
+  const bookActivity: RichTransaction[] = [];
 
   return (
     <div className="bg-slate-50 pb-16 pt-8">
@@ -117,6 +97,9 @@ export default async function ProfilePage() {
           <h1 className="text-3xl font-semibold text-slate-900">{displayName}</h1>
           <p className="mt-2 text-sm text-slate-600">
             Track the books you have released and see how the community interacts with them.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Hook up your authentication backend to replace this placeholder data with real activity.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center rounded-full bg-violet-100 px-3 py-1 text-sm font-medium text-violet-700">

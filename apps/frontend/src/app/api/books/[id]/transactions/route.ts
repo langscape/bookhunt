@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 
 import { createTransaction } from "@/lib/directus";
-import { authOptions } from "@/lib/auth/options";
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL as string;
 const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN as string;
@@ -29,8 +27,6 @@ export async function POST(
     const id = params.id;
     const contentType = req.headers.get("content-type") || "";
     let payload: any = { book: id, status: "published" };
-    const session = await getServerSession(authOptions);
-    const directusToken = session?.user?.directusAccessToken;
 
     if (contentType.includes("multipart/form-data")) {
       const form = await req.formData();
@@ -54,7 +50,7 @@ export async function POST(
         const ids: string[] = [];
         for (const p of pics) {
           if (p instanceof File) {
-            const fid = await uploadDirectusFile(p, directusToken);
+            const fid = await uploadDirectusFile(p);
             ids.push(fid);
           }
         }
@@ -76,11 +72,7 @@ export async function POST(
       };
     }
 
-    if (session?.user && !payload.reporter) {
-      payload.reporter = session.user.name ?? session.user.email ?? undefined;
-    }
-
-    if (!session && (!payload.reporter || String(payload.reporter).trim().length === 0)) {
+    if (!payload.reporter || String(payload.reporter).trim().length === 0) {
       return NextResponse.json({ error: "Add your name before submitting" }, { status: 401 });
     }
 
@@ -95,7 +87,7 @@ export async function POST(
       return NextResponse.json({ error: "Invalid type" }, { status: 400 });
     }
 
-    const created = await createTransaction(payload, directusToken);
+    const created = await createTransaction(payload);
     return NextResponse.json(created, { status: 201 });
   } catch (e) {
     return NextResponse.json(
